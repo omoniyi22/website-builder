@@ -8,8 +8,9 @@ interface BlockWrapperProps {
     index: number;
     moveBlock: (dragIndex: number, hoverIndex: number) => void;
     duplicateBlock: (blockId: string) => void;
-    deleteBlock: (blockId: string) => void;
-    onSettingsOpen: (blockId: string) => void;
+    deleteBlock: (id: string) => void;
+    onSettingsOpen: (id: string) => void;
+    children?: React.ReactNode;
 }
 
 interface DragItem {

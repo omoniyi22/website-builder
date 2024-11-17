@@ -1,9 +1,6 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import type { Block } from '../../types';
-import { BLOCK_TYPES } from './blocks';
-import './blocks'; // This registers all the custom elements
-import { BlockSelection } from './BlockSelection';
-import { Settings, Move, Copy, Trash2 } from 'lucide-react';
+import { BLOCK_TYPES } from './blockTypes';
 
 interface BlockEditorProps {
     blocks: Block[];
@@ -20,88 +17,61 @@ export const BlockEditor: React.FC<BlockEditorProps> = ({
                                                         }) => {
     const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
     const [focusedBlockId, setFocusedBlockId] = useState<string | null>(null);
+    const editorRef = useRef<HTMLDivElement>(null);
 
+    // Handle block updates
+    const handleBlockUpdate = useCallback((e: CustomEvent) => {
+        const blockElement = e.target as HTMLElement;
+        const blockId = blockElement.getAttribute('data-block-id');
+        if (!blockId) return;
 
-    const renderBlock = (block: Block) => {
-        const tagName = BLOCK_TYPES[block.type];
+        const newBlocks = blocks.map(block =>
+            block.id === blockId ? { ...block, ...e.detail } : block
+        );
+        onBlocksChange(newBlocks);
+    }, [blocks, onBlocksChange]);
+
+    // Initialize event listeners
+    useEffect(() => {
+        const editor = editorRef.current;
+        if (editor) {
+            editor.addEventListener('block-update', handleBlockUpdate as EventListener);
+        }
+        return () => {
+            if (editor) {
+                editor.removeEventListener('block-update', handleBlockUpdate as EventListener);
+            }
+        };
+    }, [handleBlockUpdate]);
+
+    // Single renderBlock implementation
+    const renderBlock = useCallback((block: Block) => {
+        const tagName = BLOCK_TYPES[block.type as keyof typeof BLOCK_TYPES];
         if (!tagName) return null;
 
         return (
-            <block-selection
-                selected={selectedBlockId === block.id}
-                focused={focusedBlockId === block.id}
+            <div
+                key={block.id}
+                className={`block-wrapper ${
+                    selectedBlockId === block.id ? 'selected' : ''
+                } ${focusedBlockId === block.id ? 'focused' : ''}`}
                 onClick={() => setSelectedBlockId(block.id)}
             >
                 {/* Block controls */}
-                <div slot="controls" className="flex items-center space-x-1">
-                    <button
-                        className="p-1 bg-white rounded shadow hover:bg-gray-50"
-                        onClick={() => {/* Handle settings */}}
-                    >
-                        <Settings className="w-4 h-4" />
-                    </button>
-                    <button
-                        className="p-1 bg-white rounded shadow hover:bg-gray-50"
-                        onClick={() => {/* Handle duplicate */}}
-                    >
-                        <Copy className="w-4 h-4" />
-                    </button>
-                    <button
-                        className="p-1 bg-white rounded shadow hover:bg-gray-50"
-                        onClick={() => {/* Handle delete */}}
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </button>
+                <div className="block-controls">
+                    {/* Your controls JSX */}
                 </div>
 
+                {/* Render the Lit component */}
                 {React.createElement(tagName, {
                     'data-block-id': block.id,
                     block: block,
                     onFocus: () => setFocusedBlockId(block.id),
                     onBlur: () => setFocusedBlockId(null)
                 })}
-            </block-selection>
+            </div>
         );
-    };
-
-
-    useEffect(() => {
-        // Add event listeners for block updates
-        const handleBlockUpdate = (e: CustomEvent) => {
-            const blockElement = e.target as HTMLElement;
-            const blockId = blockElement.getAttribute('data-block-id');
-            if (!blockId) return;
-
-            const newBlocks = blocks.map(block =>
-                block.id === blockId ? { ...block, ...e.detail } : block
-            );
-            onBlocksChange(newBlocks);
-        };
-
-        const editor = editorRef.current;
-        if (editor) {
-            editor.addEventListener('block-update', handleBlockUpdate as EventListener);
-        }
-
-        return () => {
-            if (editor) {
-                editor.removeEventListener('block-update', handleBlockUpdate as EventListener);
-            }
-        };
-    }, [blocks, onBlocksChange]);
-
-    const renderBlock = (block: Block) => {
-        const tagName = BLOCK_TYPES[block.type];
-        if (!tagName) return null;
-
-        // Create the custom element
-        return React.createElement(tagName, {
-            key: block.id,
-            'data-block-id': block.id,
-            block: block,
-            class: `block-wrapper ${isDragging ? 'is-dragging' : ''}`
-        });
-    };
+    }, [selectedBlockId, focusedBlockId]);
 
     return (
         <div

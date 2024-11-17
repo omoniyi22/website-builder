@@ -1,28 +1,29 @@
-import type { Block } from '../../types';
+import type { Block, BlockSettings } from '../../types/blocks';
 
-interface BlockCombination {
+const defaultSettings: BlockSettings = {
+    width: 'normal',
+    alignment: 'left',
+    padding: 'normal'
+};
+
+export interface BlockCombination {
     id: string;
     name: string;
     description: string;
     category: string;
-    previewImage?: string; // SVG preview
+    previewImage?: string;
     blocks: Omit<Block, 'id'>[];
-    tags?: string[]; // For better searching
+    tags?: string[];
 }
 
-export const blockCombination: BlockCombination[] = [
+export const blockCombinations: BlockCombination[] = [
     {
         id: 'hero-section',
         name: 'Hero Section',
         description: 'Full-width hero with image, heading, and call to action',
         category: 'Headers',
         tags: ['hero', 'header', 'banner', 'cta'],
-        previewImage: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
-            <rect width="400" height="200" fill="#f3f4f6"/>
-            <rect x="50" y="40" width="300" height="40" fill="#d1d5db"/>
-            <rect x="100" y="100" width="200" height="20" fill="#e5e7eb"/>
-            <rect x="150" y="140" width="100" height="30" fill="#60a5fa"/>
-        </svg>`,
+        previewImage: `<svg>...</svg>`,
         blocks: [
             {
                 type: 'image',
@@ -33,27 +34,21 @@ export const blockCombination: BlockCombination[] = [
                 },
                 settings: {
                     width: 'full',
+                    alignment: 'center',
                     padding: 'none'
                 }
             },
             {
                 type: 'text',
-                content: 'Your Compelling Headline',
+                content: {
+                    text: 'Your Compelling Headline'
+                },
                 settings: {
                     width: 'wide',
                     alignment: 'center',
                     padding: 'large',
                     fontSize: 'large',
                     fontWeight: 'bold'
-                }
-            },
-            {
-                type: 'text',
-                content: 'A brief description of your value proposition',
-                settings: {
-                    width: 'normal',
-                    alignment: 'center',
-                    padding: 'small'
                 }
             }
         ]
@@ -143,6 +138,16 @@ export const blockCombination: BlockCombination[] = [
     },
     // Add more combinations...
 ];
+
+export const createBlocksFromCombination = (combinationId: string): Block[] => {
+    const combination = blockCombinations.find(c => c.id === combinationId);
+    if (!combination) return [];
+
+    return combination.blocks.map(block => ({
+        ...block,
+        id: Date.now() + Math.random().toString(36).substr(2, 9)
+    }));
+};
 
 // Function to generate preview HTML for a combination
 export const generateCombinationPreview = (combination: BlockCombination): string => {

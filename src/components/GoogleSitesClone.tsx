@@ -1,29 +1,35 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import {
-    Type, Image, FileText, Grid, ChevronRight, Plus, Menu, Search,
-    Globe, Lock, Trash2
-} from 'lucide-react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import debounce from 'lodash/debounce';
+import {
+    Menu,
+    Search,
+    Globe,
+    Lock,
+    Trash2,
+    Plus
+} from 'lucide-react';
+
 import { BlockEditor } from './BlockEditor';
 import { PageList } from './PageList';
 import { ThemeEditor } from './ThemeEditor';
-import { SiteSettings } from './SiteSettings';
 import { PageSettingsEditor } from './PageSettings';
 import { PublishModal } from './PublishModal';
 import { PreviewFrame } from './PreviewFrame';
 import { BlockLibrary } from './BlockLibrary';
+
 import { useToast } from '../hooks/useToast';
 import { useSiteData } from '../hooks/useSiteData';
 import { useAuth } from '../hooks/useAuth';
-import type { Site, Page, Theme } from '../types';
-import type { Block } from '../types/blocks';
+
+import type { Site, Page, Theme, PageSettings } from '../types';
 import { createBlocksFromCombination } from './BlockEditor/blockCombination';
+import { createBlockFromTemplate } from './BlockEditor/blockTemplates';
+import { pageSettingsToPage } from '../types';
 
-interface Props {} // Add props if needed
+export const GoogleSitesClone: React.FC = () => {
 
-const GoogleSitesClone: React.FC<Props> = () => {
     // Core state
     const [site, setSite] = useState<Site | null>(null);
     const [currentPage, setCurrentPage] = useState<Page | null>(null);
@@ -34,6 +40,8 @@ const GoogleSitesClone: React.FC<Props> = () => {
     const [showPublishModal, setShowPublishModal] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Undo/Redo state
     const [undoStack, setUndoStack] = useState<Site[]>([]);
     const [redoStack, setRedoStack] = useState<Site[]>([]);
 
@@ -44,7 +52,7 @@ const GoogleSitesClone: React.FC<Props> = () => {
     // Hooks
     const { toast } = useToast();
     const { user } = useAuth();
-    const { saveSite, publishSite, getSiteData } = useSiteData();
+    const { getSiteData, saveSite, publishSite } = useSiteData();
 
     // Initialize site data
     useEffect(() => {
@@ -62,7 +70,7 @@ const GoogleSitesClone: React.FC<Props> = () => {
             }
         };
         loadSite();
-    }, []);
+    }, [getSiteData, toast]);
 
     // Auto-save functionality
     const debouncedSave = useCallback(
@@ -85,11 +93,11 @@ const GoogleSitesClone: React.FC<Props> = () => {
                 });
             }
         }, 2000),
-        []
+        [saveSite, toast]
     );
 
-    // Update handlers
-    const handleSiteUpdate = (updates: Partial<Site>) => {
+    // Handle site updates
+    const handleSiteUpdate = useCallback((updates: Partial<Site>) => {
         if (!site) return;
 
         // Save current state for undo
@@ -99,35 +107,78 @@ const GoogleSitesClone: React.FC<Props> = () => {
         const newSite = { ...site, ...updates };
         setSite(newSite);
         debouncedSave(newSite);
-    };
+    }, [site, debouncedSave]);
 
-    const handleBlockSelect = (templateId: string) => {
+// Move handlePageUpdate before handleBlockSelect
+    const handlePageUpdate = useCallback((pageId: string, updates: Partial<Page>) => {
+        if (!site) return;
+        const newPages = site.pages.map(p =>
+            p.id === pageId ? { ...p, ...updates } : p
+        );
+        handleSiteUpdate({
+            ...site,
+            pages: newPages
+        });
+    }, [site, handleSiteUpdate]);
+
+    const handleBlockSelect = useCallback((templateId: string) => {
         if (!currentPage) return;
         const newBlock = createBlockFromTemplate(templateId);
+        if (!newBlock) return;
+
         handlePageUpdate(currentPage.id, {
             content: [...(currentPage.content || []), newBlock],
             updatedAt: new Date()
         });
-    };
+    }, [currentPage, handlePageUpdate]);
 
-    const handleCombinationSelect = (combinationId: string) => {
+    const handleCombinationSelect = useCallback((combinationId: string) => {
         if (!currentPage) return;
         const newBlocks = createBlocksFromCombination(combinationId);
+        if (!newBlocks.length) return;
+
         handlePageUpdate(currentPage.id, {
             content: [...(currentPage.content || []), ...newBlocks],
             updatedAt: new Date()
         });
-    };
+    }, [currentPage, handlePageUpdate]);
 
-    const handlePageUpdate = (pageId: string, updates: Partial<Page>) => {
+    const handleCreatePage = useCallback(() => {
         if (!site) return;
+        const now = new Date();
+        const baseSettings: PageSettings = {
+            id: Date.now().toString(),
+            title: 'New Page',
+            urlPrefix: `page-${Date.now()}`,
+            showInNav: true,
+            parentId: null,
+            isDummy: false,
+            order: site.pages.length,
+            children: [],
+            headerConfig: {
+                enabled: false,
+                height: 200
+            },
+            footerConfig: {
+                enabled: false,
+                content: ''
+            }
+        };
 
-        const newPages = site.pages.map((page: Page) =>
-            page.id === pageId ? { ...page, ...updates } : page
-        );
+        const newPage: Page = {
+            ...pageSettingsToPage(baseSettings),
+            content: [],
+            isPublished: false,
+            createdAt: now,
+            updatedAt: now
+        };
 
-        handleSiteUpdate({ pages: newPages });
-    };
+        handleSiteUpdate({
+            ...site,
+            pages: [...site.pages, newPage]
+        });
+        setCurrentPage(newPage);
+    }, [site, handleSiteUpdate]);
 
     // Publishing
     const handlePublish = async () => {
@@ -204,7 +255,7 @@ const GoogleSitesClone: React.FC<Props> = () => {
                     <input
                         type="text"
                         value={site.name}
-                        onChange={(e) => handleSiteUpdate({name: e.target.value})}
+                        onChange={(e) => handleSiteUpdate({ name: e.target.value })}
                         className="ml-4 px-2 py-1 text-lg font-normal hover:bg-gray-100 rounded outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Untitled site"
                     />
@@ -273,22 +324,7 @@ const GoogleSitesClone: React.FC<Props> = () => {
                     currentPage={currentPage}
                     onPageSelect={setCurrentPage}
                     onPageUpdate={handlePageUpdate}
-                    onCreatePage={() => {
-                        const newPage: Page = {
-                            id: Date.now().toString(),
-                            title: 'New Page',
-                            slug: `page-${Date.now()}`,
-                            content: [],
-                            isPublished: false,
-                            createdAt: new Date(),
-                            updatedAt: new Date(),
-                            order: site?.pages?.length || 0 // Use optional chaining and provide a default value
-                        };
-                        handleSiteUpdate({
-                            pages: [...(site?.pages || []), newPage] // Use optional chaining and provide a default empty array
-                        });
-                        setCurrentPage(newPage);
-                    }}
+                    onCreatePage={handleCreatePage}
                 />
 
                 {/* Main Content Area */}
@@ -310,7 +346,6 @@ const GoogleSitesClone: React.FC<Props> = () => {
                         />
                     )}
                 </div>
-
 
                 {/* Right Sidebar */}
                 <div
@@ -362,32 +397,14 @@ const GoogleSitesClone: React.FC<Props> = () => {
                                 currentPage={currentPage}
                                 onPageSelect={setCurrentPage}
                                 onUpdate={(newPages) => {
-                                    handleSiteUpdate({ pages: newPages });
+                                    handleSiteUpdate({ ...site, pages: newPages });
                                 }}
-                                onCreatePage={() => {
-                                    const newPage: Page = {
-                                        id: Date.now().toString(),
-                                        title: 'New Page',
-                                        slug: `page-${Date.now()}`,
-                                        content: [],
-                                        isPublished: false,
-                                        createdAt: new Date(),
-                                        updatedAt: new Date(),
-                                        order: site.pages.length,
-                                        children: [], // Add this for the new nesting feature
-                                        parentId: null, // Add this for the new nesting feature
-                                        isDummy: false, // Add this for the new dummy page feature
-                                        showInNav: true // Add this for nav visibility
-                                    };
-                                    handleSiteUpdate({
-                                        pages: [...site.pages, newPage]
-                                    });
-                                    setCurrentPage(newPage);
-                                }}
+                                onCreatePage={handleCreatePage}
                                 onDeletePage={(pageId) => {
                                     const confirmed = window.confirm('Are you sure you want to delete this page?');
                                     if (confirmed) {
                                         handleSiteUpdate({
+                                            ...site,
                                             pages: site.pages.filter(p => p.id !== pageId)
                                         });
                                         if (currentPage?.id === pageId) {
@@ -423,5 +440,5 @@ const GoogleSitesClone: React.FC<Props> = () => {
                 </div>
             </div>
         </DndProvider>
-    )};
-export { GoogleSitesClone };
+    );
+};
