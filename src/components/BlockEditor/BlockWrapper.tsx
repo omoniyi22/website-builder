@@ -1,45 +1,45 @@
-import React, { useRef, useState } from 'react';
-import { useDrag, useDrop, DragSourceMonitor } from 'react-dnd';
-import type { Block } from '../../types';  // Fix the import path
+import React, { useRef } from 'react';
+import { useDrag, useDrop } from 'react-dnd';
 import { Settings, Move, Copy, Trash2 } from 'lucide-react';
+import type { Block } from '../../types';
 
 interface BlockWrapperProps {
     block: Block;
     index: number;
-    children: React.ReactNode;
     moveBlock: (dragIndex: number, hoverIndex: number) => void;
-    onDelete: () => void;
-    onDuplicate: () => void;
-    onUpdate: (updates: Partial<Block>) => void;
-    onDraggingChange: (isDragging: boolean) => void;
+    duplicateBlock: (blockId: string) => void;
+    deleteBlock: (blockId: string) => void;
+    onSettingsOpen: (blockId: string) => void;
 }
 
 interface DragItem {
     id: string;
     index: number;
+    type: string;
 }
 
 export const BlockWrapper: React.FC<BlockWrapperProps> = ({
                                                               block,
                                                               index,
-                                                              children,
                                                               moveBlock,
-                                                              onDelete,
-                                                              onDuplicate,
-                                                              onUpdate,
-                                                              onDraggingChange
+                                                              duplicateBlock,
+                                                              deleteBlock,
+                                                              onSettingsOpen,
+                                                              children
                                                           }) => {
     const ref = useRef<HTMLDivElement>(null);
-    const [showSettings, setShowSettings] = useState(false);
 
-    const [{ handlerId }, drop] = useDrop<DragItem, void, { handlerId: string | symbol | null }>({
-        accept: 'BLOCK_SORT',
-        collect(monitor) {
-            return {
-                handlerId: monitor.getHandlerId(),
-            };
-        },
-        hover(item: DragItem, monitor) {
+    const [{ isDragging }, drag, preview] = useDrag({
+        type: 'BLOCK',
+        item: { id: block.id, index, type: 'BLOCK' },
+        collect: (monitor) => ({
+            isDragging: monitor.isDragging()
+        })
+    });
+
+    const [{ isOver, canDrop }, drop] = useDrop({
+        accept: 'BLOCK',
+        hover: (item: DragItem, monitor) => {
             if (!ref.current) return;
 
             const dragIndex = item.index;
@@ -47,143 +47,90 @@ export const BlockWrapper: React.FC<BlockWrapperProps> = ({
 
             if (dragIndex === hoverIndex) return;
 
-            const hoverBoundingRect = ref.current?.getBoundingClientRect();
+            const hoverBoundingRect = ref.current.getBoundingClientRect();
             const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
             const clientOffset = monitor.getClientOffset();
-
             if (!clientOffset) return;
 
             const hoverClientY = clientOffset.y - hoverBoundingRect.top;
 
+            // Only perform the move when the mouse has crossed half of the items height
             if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return;
             if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
 
             moveBlock(dragIndex, hoverIndex);
             item.index = hoverIndex;
         },
+        collect: (monitor) => ({
+            isOver: monitor.isOver(),
+            canDrop: monitor.canDrop()
+        })
     });
 
-    const [{ isDragging }, drag] = useDrag<
-        DragItem,
-        void,
-        { isDragging: boolean }
-    >({
-        type: 'BLOCK_SORT',
-        item: () => ({
-            id: block.id,
-            index
-        }),
-        collect: (monitor: DragSourceMonitor) => ({
-            isDragging: monitor.isDragging()
-        }),
-        end: () => onDraggingChange(false),
-    });
-
-    drag(drop(ref));
+    drag(preview(drop(ref)));
 
     return (
         <div
             ref={ref}
-            className={`relative group ${
-                isDragging ? 'opacity-50' : ''
-            }`}
-            data-handler-id={handlerId}
+            className={`
+                group relative rounded-lg transition-all duration-200
+                ${isDragging ? 'opacity-50' : ''}
+                ${isOver ? 'scale-105' : ''}
+            `}
         >
             {/* Block Controls */}
-            <div className="absolute -left-12 top-0 bottom-0 w-10 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                    className="p-1.5 hover:bg-gray-100 rounded mb-1"
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onClick={() => setShowSettings(!showSettings)}
-                >
-                    <Settings className="w-4 h-4 text-gray-400" />
-                </button>
-                <button
-                    className="p-1.5 hover:bg-gray-100 rounded cursor-move"
-                    onMouseDown={(e) => e.stopPropagation()}
-                >
-                    <Move className="w-4 h-4 text-gray-400" />
-                </button>
+            <div className="absolute -left-10 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex flex-col items-center space-y-2">
+                    <button
+                        className="p-1 bg-white rounded-full shadow hover:bg-gray-50"
+                        onMouseDown={(e) => e.preventDefault()}
+                    >
+                        <Move className="w-4 h-4 text-gray-400" />
+                    </button>
+                </div>
+            </div>
+
+            {/* Block Settings */}
+            <div className="absolute -right-10 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex flex-col items-center space-y-2">
+                    <button
+                        onClick={() => onSettingsOpen(block.id)}
+                        className="p-1 bg-white rounded-full shadow hover:bg-gray-50"
+                    >
+                        <Settings className="w-4 h-4 text-gray-400" />
+                    </button>
+                    <button
+                        onClick={() => duplicateBlock(block.id)}
+                        className="p-1 bg-white rounded-full shadow hover:bg-gray-50"
+                    >
+                        <Copy className="w-4 h-4 text-gray-400" />
+                    </button>
+                    <button
+                        onClick={() => deleteBlock(block.id)}
+                        className="p-1 bg-white rounded-full shadow hover:bg-gray-50"
+                    >
+                        <Trash2 className="w-4 h-4 text-gray-400" />
+                    </button>
+                </div>
             </div>
 
             {/* Block Content */}
-            <div className={`relative border border-transparent group-hover:border-gray-200 rounded-lg ${
-                showSettings ? 'border-blue-500' : ''
-            }`}>
-                <div className="p-4">{children}</div>
-
-                {/* Block Settings Panel */}
-                {showSettings && (
-                    <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-lg z-10 p-4">
-                        <h4 className="text-sm font-medium text-gray-900 mb-3">Block Settings</h4>
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="text-sm text-gray-700 block mb-1">Width</label>
-                                <select
-                                    value={block.settings.width}
-                                    onChange={(e) => onUpdate({
-                                        settings: { ...block.settings, width: e.target.value as 'normal' | 'wide' | 'full' }
-                                    })}
-                                    className="w-full border border-gray-200 rounded px-2 py-1 text-sm"
-                                >
-                                    <option value="normal">Normal</option>
-                                    <option value="wide">Wide</option>
-                                    <option value="full">Full width</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="text-sm text-gray-700 block mb-1">Alignment</label>
-                                <select
-                                    value={block.settings.alignment}
-                                    onChange={(e) => onUpdate({
-                                        settings: { ...block.settings, alignment: e.target.value as 'left' | 'center' | 'right' }
-                                    })}
-                                    className="w-full border border-gray-200 rounded px-2 py-1 text-sm"
-                                >
-                                    <option value="left">Left</option>
-                                    <option value="center">Center</option>
-                                    <option value="right">Right</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="text-sm text-gray-700 block mb-1">Padding</label>
-                                <select
-                                    value={block.settings.padding}
-                                    onChange={(e) => onUpdate({
-                                        settings: { ...block.settings, padding: e.target.value as 'none' | 'small' | 'normal' | 'large' }
-                                    })}
-                                    className="w-full border border-gray-200 rounded px-2 py-1 text-sm"
-                                >
-                                    <option value="none">None</option>
-                                    <option value="small">Small</option>
-                                    <option value="normal">Normal</option>
-                                    <option value="large">Large</option>
-                                </select>
-                            </div>
-
-                            <div className="pt-4 border-t border-gray-200">
-                                <button
-                                    onClick={onDuplicate}
-                                    className="flex items-center text-sm text-gray-600 hover:text-gray-900 mb-2"
-                                >
-                                    <Copy className="w-4 h-4 mr-2" />
-                                    Duplicate Block
-                                </button>
-                                <button
-                                    onClick={onDelete}
-                                    className="flex items-center text-sm text-red-600 hover:text-red-700"
-                                >
-                                    <Trash2 className="w-4 h-4 mr-2" />
-                                    Delete Block
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
+            <div className={`
+                px-4 py-2 rounded-lg transition-colors duration-200
+                ${isOver ? 'bg-blue-50' : 'hover:bg-gray-50'}
+            `}>
+                {children}
             </div>
+
+            {/* Drop Indicators */}
+            <div className={`
+                absolute inset-x-0 h-1 -top-1 bg-blue-500 transform scale-x-0 transition-transform
+                ${isOver && canDrop ? 'scale-x-100' : ''}
+            `} />
+            <div className={`
+                absolute inset-x-0 h-1 -bottom-1 bg-blue-500 transform scale-x-0 transition-transform
+                ${isOver && canDrop ? 'scale-x-100' : ''}
+            `} />
         </div>
     );
 };

@@ -19,6 +19,7 @@ import { useSiteData } from '../hooks/useSiteData';
 import { useAuth } from '../hooks/useAuth';
 import type { Site, Page, Theme } from '../types';
 import type { Block } from '../types/blocks';
+import { createBlocksFromCombination } from './BlockEditor/blockCombination';
 
 interface Props {} // Add props if needed
 
@@ -98,6 +99,24 @@ const GoogleSitesClone: React.FC<Props> = () => {
         const newSite = { ...site, ...updates };
         setSite(newSite);
         debouncedSave(newSite);
+    };
+
+    const handleBlockSelect = (templateId: string) => {
+        if (!currentPage) return;
+        const newBlock = createBlockFromTemplate(templateId);
+        handlePageUpdate(currentPage.id, {
+            content: [...(currentPage.content || []), newBlock],
+            updatedAt: new Date()
+        });
+    };
+
+    const handleCombinationSelect = (combinationId: string) => {
+        if (!currentPage) return;
+        const newBlocks = createBlocksFromCombination(combinationId);
+        handlePageUpdate(currentPage.id, {
+            content: [...(currentPage.content || []), ...newBlocks],
+            updatedAt: new Date()
+        });
     };
 
     const handlePageUpdate = (pageId: string, updates: Partial<Page>) => {
@@ -329,23 +348,9 @@ const GoogleSitesClone: React.FC<Props> = () => {
                         {activeTab === 'insert' && (
                             <BlockLibrary
                                 searchTerm={searchTerm}
-                                onBlockSelect={(blockType) => {
-                                    if (!currentPage) return;
-                                    const newBlock: Block = {
-                                        id: Date.now().toString(),
-                                        type: blockType,
-                                        content: '',
-                                        settings: {
-                                            width: 'normal',
-                                            alignment: 'left',
-                                            padding: 'normal'
-                                        }
-                                    };
-                                    handlePageUpdate(currentPage.id, {
-                                        content: [...(currentPage.content || []), newBlock],
-                                        updatedAt: new Date()
-                                    });
-                                }}
+                                onSearchChange={setSearchTerm}
+                                onBlockSelect={handleBlockSelect}
+                                onCombinationSelect={handleCombinationSelect}
                             />
                         )}
 
