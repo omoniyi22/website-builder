@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import type { Block } from '../../../types';
+import type { Block, BlockContent, ColumnsBlockContent, Column } from '../../../types';
 
 @customElement('site-columns-block')
 export class ColumnsBlock extends LitElement {
@@ -23,8 +23,14 @@ export class ColumnsBlock extends LitElement {
         .width-full { width: 100%; }
     `;
 
+    private isColumnsContent(content: BlockContent): content is ColumnsBlockContent {
+        return 'columns' in content && Array.isArray((content as ColumnsBlockContent).columns);
+    }
+
     private handleColumnUpdate(columnId: string, blocks: Block[]) {
-        const newColumns = this.block.content.columns.map(col =>
+        if (!this.isColumnsContent(this.block.content)) return;
+
+        const newColumns = this.block.content.columns.map((col: Column) =>
             col.id === columnId ? { ...col, blocks } : col
         );
 
@@ -38,17 +44,29 @@ export class ColumnsBlock extends LitElement {
         }));
     }
 
+    private renderColumn(column: Column) {
+        return html`
+            <div class="column" style="width: ${column.width * 100}%">
+                <slot name="column-${column.id}"></slot>
+            </div>
+        `;
+    }
+
+    private renderColumns(columns: Column[]) {
+        return columns.map((column: Column) => this.renderColumn(column));
+    }
+
     render() {
         const { settings, content } = this.block;
+
+        if (!this.isColumnsContent(content)) {
+            return html`<div>Invalid column content</div>`;
+        }
 
         return html`
             <div class="columns-block width-${settings.width}">
                 <div class="columns">
-                    ${content.columns.map(column => html`
-                        <div class="column" style="width: ${column.width * 100}%">
-                            <slot name="column-${column.id}"></slot>
-                        </div>
-                    `)}
+                    ${this.renderColumns(content.columns)}
                 </div>
             </div>
         `;

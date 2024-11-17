@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import type { Block, BlockSettings } from '../../types';
+import type { Block, BlockSettings as IBlockSettings, BlockSettingsUpdate } from '../../types';
 
 @customElement('block-settings-panel')
 export class BlockSettingsPanel extends LitElement {
@@ -57,7 +57,7 @@ export class BlockSettingsPanel extends LitElement {
         }
     `;
 
-    private updateSettings(updates: Partial<BlockSettings>) {
+    private updateSettings(updates: BlockSettingsUpdate) {
         this.dispatchEvent(new CustomEvent('settings-update', {
             detail: {
                 ...this.block,
@@ -68,71 +68,46 @@ export class BlockSettingsPanel extends LitElement {
         }));
     }
 
+    private isTextBlock(): boolean {
+        return this.block.type === 'text' || this.block.type === 'heading';
+    }
+
     private renderTextSettings() {
-        if (this.block.type !== 'text') return null;
+        if (!this.isTextBlock()) return null;
+
+        const currentFontSize = this.block.settings.fontSize || 'normal';
 
         return html`
             <div class="section">
                 <div class="section-title">Typography</div>
                 <div class="option-group">
-                    <button 
-                        ?selected=${this.block.settings.fontSize === 'small'}
-                        @click=${() => this.updateSettings({ fontSize: 'small' })}
+                    <button
+                            ?selected=${currentFontSize === 'small'}
+                            @click=${() => this.updateSettings({ fontSize: 'small' })}
                     >Small</button>
                     <button
-                        ?selected=${this.block.settings.fontSize === 'normal'}
-                        @click=${() => this.updateSettings({ fontSize: 'normal' })}
+                            ?selected=${currentFontSize === 'normal'}
+                            @click=${() => this.updateSettings({ fontSize: 'normal' })}
                     >Normal</button>
                     <button
-                        ?selected=${this.block.settings.fontSize === 'large'}
-                        @click=${() => this.updateSettings({ fontSize: 'large' })}
+                            ?selected=${currentFontSize === 'large'}
+                            @click=${() => this.updateSettings({ fontSize: 'large' })}
                     >Large</button>
                 </div>
-            </div>
-        `;
-    }
 
-    private renderImageSettings() {
-        if (this.block.type !== 'image') return null;
-
-        return html`
-            <div class="section">
-                <div class="section-title">Image Settings</div>
-                <div class="input-group">
-                    <label>Alt Text</label>
-                    <input 
-                        type="text"
-                        .value=${this.block.content.alt || ''}
-                        @input=${(e: InputEvent) => {
-            const input = e.target as HTMLInputElement;
-            this.dispatchEvent(new CustomEvent('content-update', {
-                detail: {
-                    ...this.block,
-                    content: { ...this.block.content, alt: input.value }
-                }
-            }));
-        }}
-                    />
-                </div>
-                <div class="input-group">
-                    <label>Aspect Ratio</label>
-                    <select
-                        .value=${this.block.content.aspectRatio || '16:9'}
-                        @change=${(e: Event) => {
-            const select = e.target as HTMLSelectElement;
-            this.dispatchEvent(new CustomEvent('content-update', {
-                detail: {
-                    ...this.block,
-                    content: { ...this.block.content, aspectRatio: select.value }
-                }
-            }));
-        }}
-                    >
-                        <option value="16:9">16:9</option>
-                        <option value="4:3">4:3</option>
-                        <option value="1:1">1:1</option>
-                        <option value="original">Original</option>
-                    </select>
+                <div class="option-group">
+                    <button
+                            ?selected=${this.block.settings.fontWeight === 'normal'}
+                            @click=${() => this.updateSettings({ fontWeight: 'normal' })}
+                    >Regular</button>
+                    <button
+                            ?selected=${this.block.settings.fontWeight === 'medium'}
+                            @click=${() => this.updateSettings({ fontWeight: 'medium' })}
+                    >Medium</button>
+                    <button
+                            ?selected=${this.block.settings.fontWeight === 'bold'}
+                            @click=${() => this.updateSettings({ fontWeight: 'bold' })}
+                    >Bold</button>
                 </div>
             </div>
         `;
@@ -144,38 +119,37 @@ export class BlockSettingsPanel extends LitElement {
                 <div class="section">
                     <div class="section-title">Layout</div>
                     <div class="option-group">
-                        <button 
-                            ?selected=${this.block.settings.width === 'normal'}
-                            @click=${() => this.updateSettings({ width: 'normal' })}
+                        <button
+                                ?selected=${this.block.settings.width === 'normal'}
+                                @click=${() => this.updateSettings({ width: 'normal' })}
                         >Normal</button>
                         <button
-                            ?selected=${this.block.settings.width === 'wide'}
-                            @click=${() => this.updateSettings({ width: 'wide' })}
+                                ?selected=${this.block.settings.width === 'wide'}
+                                @click=${() => this.updateSettings({ width: 'wide' })}
                         >Wide</button>
                         <button
-                            ?selected=${this.block.settings.width === 'full'}
-                            @click=${() => this.updateSettings({ width: 'full' })}
+                                ?selected=${this.block.settings.width === 'full'}
+                                @click=${() => this.updateSettings({ width: 'full' })}
                         >Full</button>
                     </div>
-                    
+
                     <div class="option-group">
                         <button
-                            ?selected=${this.block.settings.alignment === 'left'}
-                            @click=${() => this.updateSettings({ alignment: 'left' })}
+                                ?selected=${this.block.settings.alignment === 'left'}
+                                @click=${() => this.updateSettings({ alignment: 'left' })}
                         >Left</button>
                         <button
-                            ?selected=${this.block.settings.alignment === 'center'}
-                            @click=${() => this.updateSettings({ alignment: 'center' })}
+                                ?selected=${this.block.settings.alignment === 'center'}
+                                @click=${() => this.updateSettings({ alignment: 'center' })}
                         >Center</button>
                         <button
-                            ?selected=${this.block.settings.alignment === 'right'}
-                            @click=${() => this.updateSettings({ alignment: 'right' })}
+                                ?selected=${this.block.settings.alignment === 'right'}
+                                @click=${() => this.updateSettings({ alignment: 'right' })}
                         >Right</button>
                     </div>
                 </div>
 
                 ${this.renderTextSettings()}
-                ${this.renderImageSettings()}
             </div>
         `;
     }

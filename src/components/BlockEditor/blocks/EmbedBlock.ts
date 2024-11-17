@@ -1,6 +1,12 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import type { Block } from '../../../types';
+import type { Block, BlockContent } from '../../../types';
+
+// Define specific content type for embed blocks
+interface EmbedBlockContent extends BlockContent {
+    html: string;
+    originalContent?: string;
+}
 
 @customElement('site-embed-block')
 export class EmbedBlock extends LitElement {
@@ -54,15 +60,26 @@ export class EmbedBlock extends LitElement {
         }
     `;
 
+    private isEmbedContent(content: BlockContent): content is EmbedBlockContent {
+        return 'html' in content;
+    }
+
     private validateHTML(html: string): boolean {
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
         return !doc.querySelector('parsererror');
     }
 
+    private getHtmlContent(): string {
+        if (!this.isEmbedContent(this.block.content)) {
+            return '';
+        }
+        return this.block.content.html;
+    }
+
     private handleSave() {
-        const content = this.block.content;
-        if (!this.validateHTML(content)) {
+        const htmlContent = this.getHtmlContent();
+        if (!this.validateHTML(htmlContent)) {
             this.error = 'Invalid HTML. Please check your code.';
             return;
         }
@@ -76,19 +93,30 @@ export class EmbedBlock extends LitElement {
         }));
     }
 
+    private handleContentUpdate(newHtml: string) {
+        this.dispatchEvent(new CustomEvent('block-update', {
+            detail: {
+                ...this.block,
+                content: {
+                    html: newHtml,
+                    originalContent: newHtml
+                }
+            },
+            bubbles: true,
+            composed: true
+        }));
+    }
+
     render() {
         if (this.isEditing) {
             return html`
                 <div class="embed-wrapper">
                     <textarea
                         class="embed-editor"
-                        .value=${this.block.content}
+                        .value=${this.getHtmlContent()}
                         @input=${(e: InputEvent) => {
                 const textarea = e.target as HTMLTextAreaElement;
-                this.block = {
-                    ...this.block,
-                    content: textarea.value
-                };
+                this.handleContentUpdate(textarea.value);
             }}
                     ></textarea>
                     ${this.error ? html`<div class="error">${this.error}</div>` : null}
@@ -106,7 +134,7 @@ export class EmbedBlock extends LitElement {
                     class="embed-content"
                     @click=${() => this.isEditing = true}
                 >
-                    <div .innerHTML=${this.block.content}></div>
+                    <div .innerHTML=${this.getHtmlContent()}></div>
                 </div>
             </div>
         `;

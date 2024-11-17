@@ -1,3 +1,4 @@
+// Block Types
 export type BlockType =
     | 'text'
     | 'image'
@@ -16,15 +17,34 @@ export interface BlockSettings {
     width: 'full' | 'wide' | 'normal';
     alignment: 'left' | 'center' | 'right';
     padding: 'none' | 'small' | 'normal' | 'large';
+    fontSize?: 'small' | 'normal' | 'large';
+    fontWeight?: 'normal' | 'medium' | 'bold';
+    style?: {
+        backgroundColor?: string;
+        textColor?: string;
+        borderRadius?: string;
+        border?: string;
+    };
+}
+
+export type BlockSettingsUpdate = Partial<BlockSettings>;
+
+export interface BlockContent {
+    [key: string]: any;
+}
+
+export interface ColumnsBlockContent extends BlockContent {
+    columns: Column[];
 }
 
 export interface Block {
     id: string;
-    type: BlockType; // Changed from string to BlockType
-    content: any;
+    type: BlockType;
+    content: BlockContent;
     settings: BlockSettings;
 }
 
+// Theme Types
 export interface ThemeColors {
     primary: string;
     secondary: string;
@@ -47,14 +67,12 @@ export interface ThemeFonts {
     body: string;
 }
 
-export interface Theme {
-    id: string;
-    name: string;
-    colors: ThemeColors;
-    fonts: ThemeFonts;
-    customCSS?: string;
-    typography?: ThemeTypography;
-    spacing?: ThemeSpacing;
+export interface Typography {
+    fontSize: string;
+    fontWeight: string;
+    lineHeight: string;
+    fontFamily?: string;
+    letterSpacing?: string;
 }
 
 export interface ThemeTypography {
@@ -66,14 +84,6 @@ export interface ThemeTypography {
     };
     body: Typography;
     accent: Typography;
-}
-
-export interface Typography {
-    fontSize: string;
-    fontWeight: string;
-    lineHeight: string;
-    fontFamily?: string;
-    letterSpacing?: string;
 }
 
 export interface ThemeSpacing {
@@ -95,7 +105,17 @@ export interface ThemeSpacing {
     };
 }
 
-// Base interface for shared properties between Page and PageSettings
+export interface Theme {
+    id: string;
+    name: string;
+    colors: ThemeColors;
+    fonts: ThemeFonts;
+    customCSS?: string;
+    typography?: ThemeTypography;
+    spacing?: ThemeSpacing;
+}
+
+// Page Types
 interface BasePageConfig {
     id: string;
     title: string;
@@ -117,19 +137,23 @@ interface BasePageConfig {
     };
 }
 
-// PageSettings extends BasePageConfig
 export interface PageSettings extends BasePageConfig {
-    urlPrefix: string; // Required in PageSettings
+    urlPrefix: string;  // Required in PageSettings
 }
 
-// Page extends BasePageConfig with additional properties
 export interface Page extends BasePageConfig {
     slug: string;
     content: Block[];
     isPublished: boolean;
     createdAt: Date;
     updatedAt: Date;
-    urlPrefix?: string; // Optional in Page
+    urlPrefix?: string;  // Optional in Page
+}
+
+export interface Column {
+    id: string;
+    width: number;
+    blocks: Block[];
 }
 
 export interface Site {
@@ -139,12 +163,16 @@ export interface Site {
     theme: Theme;
 }
 
-// Type guard to check if a PageSettings is also a Page
+export interface TextBlockSettings extends BlockSettings {
+    fontSize: 'small' | 'normal' | 'large';
+    fontWeight?: 'normal' | 'medium' | 'bold';
+}
+
+// Helper Functions
 export function isPage(page: PageSettings | Page): page is Page {
     return 'content' in page && 'isPublished' in page;
 }
 
-// Converter functions
 export function pageSettingsToPage(settings: PageSettings): Omit<Page, 'content' | 'isPublished' | 'createdAt' | 'updatedAt'> {
     const { urlPrefix, ...rest } = settings;
     return {
@@ -152,6 +180,77 @@ export function pageSettingsToPage(settings: PageSettings): Omit<Page, 'content'
         slug: urlPrefix.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
         urlPrefix: urlPrefix
     };
+}
+
+export interface TextBlockContent extends BlockContent {
+    text: string;
+    format: {
+        bold: boolean;
+        italic: boolean;
+        underline: boolean;
+        strikethrough: boolean;
+    };
+}
+
+export interface GalleryBlockContent extends BlockContent {
+    images: Array<{
+        url: string;
+        alt: string;
+        caption?: string;
+        width: number;
+        height: number;
+    }>;
+    layout: 'grid' | 'masonry' | 'carousel';
+    columns: number;
+}
+
+export interface VideoBlockContent extends BlockContent {
+    url: string;
+    aspectRatio: '16:9' | '4:3' | '1:1';
+    autoplay: boolean;
+    controls: boolean;
+}
+
+export interface EmbedBlockContent extends BlockContent {
+    html: string;
+    originalContent?: string;
+}
+
+export interface ColumnsBlockContent extends BlockContent {
+    columns: Array<{
+        id: string;
+        width: number;
+        blocks: Block[];
+    }>;
+}
+
+export interface BlockContent {
+    text?: string;
+    format?: {
+        bold: boolean;
+        italic: boolean;
+        underline: boolean;
+        strikethrough: boolean;
+    };
+    html?: string;
+    url?: string;
+    images?: Array<{
+        url: string;
+        alt: string;
+        caption?: string;
+        width: number;
+        height: number;
+    }>;
+    layout?: 'grid' | 'masonry' | 'carousel';
+    columns?: Array<{
+        id: string;
+        width: number;
+        blocks: Block[];
+    }>;
+    aspectRatio?: '16:9' | '4:3' | '1:1' | 'original';
+    autoplay?: boolean;
+    controls?: boolean;
+    originalContent?: string;
 }
 
 export function pageToPageSettings(page: Page): PageSettings {

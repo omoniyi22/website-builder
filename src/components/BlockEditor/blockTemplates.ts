@@ -1,4 +1,4 @@
-import type { Block } from '../../types';
+import type { Block, BlockType, BlockSettings, BlockContent } from '../../types';
 
 interface BlockTemplate {
     id: string;
@@ -9,6 +9,12 @@ interface BlockTemplate {
     defaultContent: Omit<Block, 'id'>;
 }
 
+const defaultSettings: BlockSettings = {
+    width: 'normal',
+    alignment: 'left',
+    padding: 'normal'
+};
+
 export const blockTemplates: BlockTemplate[] = [
     {
         id: 'text-basic',
@@ -18,11 +24,17 @@ export const blockTemplates: BlockTemplate[] = [
         category: 'basic',
         defaultContent: {
             type: 'text',
-            content: '',
+            content: {
+                text: '',
+                format: {
+                    bold: false,
+                    italic: false,
+                    underline: false,
+                    strikethrough: false
+                }
+            },
             settings: {
-                width: 'normal',
-                alignment: 'left',
-                padding: 'normal',
+                ...defaultSettings,
                 fontSize: 'normal'
             }
         }
@@ -35,34 +47,19 @@ export const blockTemplates: BlockTemplate[] = [
         category: 'basic',
         defaultContent: {
             type: 'text',
-            content: '',
-            settings: {
-                width: 'normal',
-                alignment: 'left',
-                padding: 'normal',
-                fontSize: 'large',
-                fontWeight: 'bold'
-            }
-        }
-    },
-    {
-        id: 'image-basic',
-        name: 'Image',
-        description: 'Single responsive image',
-        icon: 'image',
-        category: 'media',
-        defaultContent: {
-            type: 'image',
             content: {
-                url: '',
-                alt: '',
-                aspectRatio: '16:9',
-                focalPoint: { x: 0.5, y: 0.5 }
+                text: '',
+                format: {
+                    bold: false,
+                    italic: false,
+                    underline: false,
+                    strikethrough: false
+                }
             },
             settings: {
-                width: 'normal',
-                alignment: 'center',
-                padding: 'normal'
+                ...defaultSettings,
+                fontSize: 'large',
+                fontWeight: 'bold'
             }
         }
     },
@@ -76,12 +73,12 @@ export const blockTemplates: BlockTemplate[] = [
             type: 'gallery',
             content: {
                 images: [],
-                layout: 'grid',
+                layout: 'grid' as const,
                 columns: 3
             },
             settings: {
-                width: 'wide',
-                padding: 'normal'
+                ...defaultSettings,
+                width: 'wide'
             }
         }
     },
@@ -100,8 +97,8 @@ export const blockTemplates: BlockTemplate[] = [
                 controls: true
             },
             settings: {
-                width: 'normal',
-                padding: 'normal'
+                ...defaultSettings,
+                width: 'normal'
             }
         }
     },
@@ -120,8 +117,8 @@ export const blockTemplates: BlockTemplate[] = [
                 ]
             },
             settings: {
-                width: 'wide',
-                padding: 'normal'
+                ...defaultSettings,
+                width: 'wide'
             }
         }
     },
@@ -133,10 +130,13 @@ export const blockTemplates: BlockTemplate[] = [
         category: 'advanced',
         defaultContent: {
             type: 'embed',
-            content: '',
+            content: {
+                html: '',
+                originalContent: ''
+            },
             settings: {
-                width: 'normal',
-                padding: 'normal'
+                ...defaultSettings,
+                width: 'normal'
             }
         }
     }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Palette, Type, Layout, Grid, Sliders } from 'lucide-react';
 import { ColorSection } from './sections/ColorSection';
 import { TypographySection } from './sections/TypographySection';
