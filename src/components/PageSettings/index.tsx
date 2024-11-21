@@ -1,13 +1,24 @@
 import React, { useState, useCallback } from 'react';
-import { FileText, ChevronRight, ChevronDown, Globe, Link, Eye, EyeOff } from 'lucide-react';
-import type { PageSettings } from '../../types';
+import type { Page, PageSettings } from '../../types';
+import { FileText, ChevronRight, ChevronDown, Globe, Eye, EyeOff, Link } from 'lucide-react';
 
 interface PageSettingsEditorProps {
     pages: PageSettings[];
     onUpdate: (pages: PageSettings[]) => void;
+    onDeletePage: (pageId: string) => void;
+    currentPage?: Page | null;
+    onCreatePage?: () => void;
+    onPageSelect?: (page: Page) => void;
 }
 
-export const PageSettingsEditor: React.FC<PageSettingsEditorProps> = ({ pages, onUpdate }) => {
+export const PageSettingsEditor: React.FC<PageSettingsEditorProps> = ({
+                                                                          pages,
+                                                                          onUpdate,
+                                                                          onDeletePage,
+                                                                          currentPage,
+                                                                          onCreatePage,
+                                                                          onPageSelect
+                                                                      }) => {
     const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
     const [draggedItem, setDraggedItem] = useState<string | null>(null);
 

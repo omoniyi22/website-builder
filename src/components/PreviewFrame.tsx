@@ -1,5 +1,5 @@
 import React from 'react';
-import { Site, Page } from '../types';
+import type { Site, Page, Block, TextBlockContent } from '../types';
 
 interface PreviewFrameProps {
     site: Site;
@@ -12,6 +12,23 @@ export const PreviewFrame: React.FC<PreviewFrameProps> = ({
                                                           }) => {
     if (!currentPage) return null;
 
+    const renderBlockContent = (block: Block) => {
+        switch (block.type) {
+            case 'text':
+                return <div dangerouslySetInnerHTML={{
+                    __html: (block.content as TextBlockContent).text || ''
+                }} />;
+            case 'image':
+                return <img
+                    src={block.content.url || ''}
+                    alt={block.content.alt || ''}
+                />;
+            // Add cases for other block types
+            default:
+                return null;
+        }
+    };
+
     return (
         <div className="bg-white h-full">
             <div className="max-w-4xl mx-auto p-8">
@@ -19,7 +36,7 @@ export const PreviewFrame: React.FC<PreviewFrameProps> = ({
                 <div>
                     {currentPage.content.map(block => (
                         <div key={block.id} className="mb-4">
-                            {block.content}
+                            {renderBlockContent(block)}
                         </div>
                     ))}
                 </div>

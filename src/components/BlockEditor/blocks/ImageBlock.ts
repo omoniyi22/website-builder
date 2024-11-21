@@ -117,8 +117,10 @@ export class ImageBlock extends LitElement {
 
     private handleImageLoad(e: Event) {
         const img = e.target as HTMLImageElement;
-        if (this.block.content.aspectRatio !== 'original') {
-            const [width, height] = this.block.content.aspectRatio.split(':').map(Number);
+        const content = this.block.content;
+
+        if (content.aspectRatio && content.aspectRatio !== 'original') {
+            const [width, height] = content.aspectRatio.split(':').map(Number);
             const containerWidth = this.offsetWidth;
             const containerHeight = (containerWidth * height) / width;
             img.style.height = `${containerHeight}px`;

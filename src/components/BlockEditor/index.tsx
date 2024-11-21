@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import type { Block } from '../../types';
 import { BLOCK_TYPES } from './blockTypes';
 

@@ -1,15 +1,8 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import debounce from 'lodash/debounce';
-import {
-    Menu,
-    Search,
-    Globe,
-    Lock,
-    Trash2,
-    Plus
-} from 'lucide-react';
+import { Menu, Search, Globe, Lock, Trash2, Plus } from 'lucide-react';
 
 import { BlockEditor } from './BlockEditor';
 import { PageList } from './PageList';
@@ -26,10 +19,60 @@ import { useAuth } from '../hooks/useAuth';
 import type { Site, Page, Theme, PageSettings } from '../types';
 import { createBlocksFromCombination } from './BlockEditor/blockCombination';
 import { createBlockFromTemplate } from './BlockEditor/blockTemplates';
-import { pageSettingsToPage } from '../types';
+import { pageSettingsToPage, pageToPageSettings } from '../types';
+
+// Helper function to convert Page array to PageSettings array
+const pagesToPageSettings = (pages: Page[]): PageSettings[] => {
+    return pages.map(page => pageToPageSettings(page));
+};
+
+// Helper function to convert PageSettings array to Page array
+const pageSettingsToPages = (settings: PageSettings[], existingPages: Page[]): Page[] => {
+    return settings.map(setting => {
+        const existingPage = existingPages.find(p => p.id === setting.id);
+        if (existingPage) {
+            // Preserve existing page data while updating settings
+            return {
+                ...existingPage,
+                title: setting.title,
+                urlPrefix: setting.urlPrefix,
+                showInNav: setting.showInNav,
+                parentId: setting.parentId,
+                isDummy: setting.isDummy,
+                order: setting.order,
+                children: setting.children,
+                headerConfig: setting.headerConfig,
+                footerConfig: setting.footerConfig
+            };
+        }
+        // Create new page from settings
+        return {
+            ...pageSettingsToPage(setting),
+            slug: setting.urlPrefix.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+            content: [],
+            isPublished: false,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
+    });
+};
+
+const debouncedSave = debounce((siteData: Site, saveSite: (site: Site) => Promise<void>, toast: any) => {
+    saveSite(siteData).then(() => {
+        toast({
+            title: 'Changes saved',
+            type: 'success'
+        });
+    }).catch((error) => {
+        toast({
+            title: 'Save failed',
+            description: 'Your changes could not be saved. Please try again.',
+            type: 'error'
+        });
+    });
+}, 2000);
 
 export const GoogleSitesClone: React.FC = () => {
-
     // Core state
     const [site, setSite] = useState<Site | null>(null);
     const [currentPage, setCurrentPage] = useState<Page | null>(null);
@@ -54,6 +97,15 @@ export const GoogleSitesClone: React.FC = () => {
     const { user } = useAuth();
     const { getSiteData, saveSite, publishSite } = useSiteData();
 
+    // Memoized handlers
+    const memoizedHandlePageSelect = useCallback((page: Page) => {
+        setCurrentPage(page);
+    }, []);
+
+    const memoizedHandleSearchChange = useCallback((term: string) => {
+        setSearchTerm(term);
+    }, []);
+
     // Initialize site data
     useEffect(() => {
         const loadSite = async () => {
@@ -72,42 +124,16 @@ export const GoogleSitesClone: React.FC = () => {
         loadSite();
     }, [getSiteData, toast]);
 
-    // Auto-save functionality
-    const debouncedSave = useCallback(
-        debounce(async (siteData: Site) => {
-            try {
-                const siteJson = JSON.stringify(siteData);
-                if (siteJson === lastSavedRef.current) return;
-
-                await saveSite(siteData);
-                lastSavedRef.current = siteJson;
-                toast({
-                    title: 'Changes saved',
-                    type: 'success'
-                });
-            } catch (error) {
-                toast({
-                    title: 'Save failed',
-                    description: 'Your changes could not be saved. Please try again.',
-                    type: 'error'
-                });
-            }
-        }, 2000),
-        [saveSite, toast]
-    );
-
     // Handle site updates
     const handleSiteUpdate = useCallback((updates: Partial<Site>) => {
         if (!site) return;
 
-        // Save current state for undo
-        setUndoStack(prev => [...prev, site]);
-        setRedoStack([]);
-
         const newSite = { ...site, ...updates };
         setSite(newSite);
-        debouncedSave(newSite);
-    }, [site, debouncedSave]);
+
+        // Debounce the save operation
+        debouncedSave(newSite, saveSite, toast);
+    }, [site, saveSite, toast]);
 
 // Move handlePageUpdate before handleBlockSelect
     const handlePageUpdate = useCallback((pageId: string, updates: Partial<Page>) => {
@@ -132,6 +158,26 @@ export const GoogleSitesClone: React.FC = () => {
         });
     }, [currentPage, handlePageUpdate]);
 
+    // Handle page settings updates
+    const handlePageSettingsUpdate = useCallback((newPageSettings: PageSettings[]) => {
+        if (!site) return;
+
+        const updatedPages = pageSettingsToPages(newPageSettings, site.pages);
+        handleSiteUpdate({ ...site, pages: updatedPages });
+    }, [site, handleSiteUpdate]);
+
+    const handlePageDelete = useCallback((pageId: string) => {
+        if (!site) return;
+        const confirmed = window.confirm('Are you sure you want to delete this page?');
+        if (confirmed) {
+            const newPages = site.pages.filter(p => p.id !== pageId);
+            handleSiteUpdate({ ...site, pages: newPages });
+            if (currentPage?.id === pageId) {
+                setCurrentPage(newPages[0] || null);
+            }
+        }
+    }, [site, currentPage, handleSiteUpdate]);
+
     const handleCombinationSelect = useCallback((combinationId: string) => {
         if (!currentPage) return;
         const newBlocks = createBlocksFromCombination(combinationId);
@@ -143,13 +189,22 @@ export const GoogleSitesClone: React.FC = () => {
         });
     }, [currentPage, handlePageUpdate]);
 
+// Replace the entire handleCreatePage function with this version:
     const handleCreatePage = useCallback(() => {
-        if (!site) return;
+        console.log("Starting page creation");
+        if (!site) {
+            console.log("No site available");
+            return;
+        }
+
         const now = new Date();
-        const baseSettings: PageSettings = {
-            id: Date.now().toString(),
+        const pageId = Date.now().toString();
+
+        const newPage: Page = {
+            id: pageId,
             title: 'New Page',
-            urlPrefix: `page-${Date.now()}`,
+            slug: `page-${pageId}`,
+            urlPrefix: `page-${pageId}`,
             showInNav: true,
             parentId: null,
             isDummy: false,
@@ -162,23 +217,25 @@ export const GoogleSitesClone: React.FC = () => {
             footerConfig: {
                 enabled: false,
                 content: ''
-            }
-        };
-
-        const newPage: Page = {
-            ...pageSettingsToPage(baseSettings),
+            },
             content: [],
             isPublished: false,
             createdAt: now,
             updatedAt: now
         };
 
-        handleSiteUpdate({
+        const newPages = [...site.pages, newPage];
+
+        // Update site in a single operation
+        const updates = {
             ...site,
-            pages: [...site.pages, newPage]
-        });
+            pages: newPages
+        };
+
+        setSite(updates);
         setCurrentPage(newPage);
-    }, [site, handleSiteUpdate]);
+        console.log("Page creation complete");
+    }, [site]);  // Only depend on site
 
     // Publishing
     const handlePublish = async () => {
@@ -255,7 +312,7 @@ export const GoogleSitesClone: React.FC = () => {
                     <input
                         type="text"
                         value={site.name}
-                        onChange={(e) => handleSiteUpdate({ name: e.target.value })}
+                        onChange={(e) => handleSiteUpdate({name: e.target.value})}
                         className="ml-4 px-2 py-1 text-lg font-normal hover:bg-gray-100 rounded outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Untitled site"
                     />
@@ -320,11 +377,16 @@ export const GoogleSitesClone: React.FC = () => {
 
                 {/* Left Sidebar - Pages */}
                 <PageList
-                    pages={site.pages}
+                    pages={site?.pages || []}
                     currentPage={currentPage}
-                    onPageSelect={setCurrentPage}
+                    onPageSelect={memoizedHandlePageSelect}
                     onPageUpdate={handlePageUpdate}
-                    onCreatePage={handleCreatePage}
+                    onCreatePage={() => {
+                        if (site) {
+                            console.log("Create page clicked");
+                            handleCreatePage();
+                        }
+                    }}
                 />
 
                 {/* Main Content Area */}
@@ -351,76 +413,70 @@ export const GoogleSitesClone: React.FC = () => {
                 <div
                     className={`fixed right-0 top-16 bottom-0 w-80 bg-white border-l border-gray-200 transform transition-transform duration-300 ${
                         rightPanelOpen ? 'translate-x-0' : 'translate-x-full'
-                    }`}>
-                    <div className="border-b border-gray-200">
-                        <div className="flex p-2 space-x-1">
-                            {['insert', 'pages', 'themes'].map((tab) => (
-                                <button
-                                    key={tab}
-                                    onClick={() => setActiveTab(tab as 'insert' | 'pages' | 'themes')}
-                                    className={`flex-1 px-4 py-2 text-sm rounded transition-colors capitalize ${
-                                        activeTab === tab ? 'bg-gray-100' : 'hover:bg-gray-50'
-                                    }`}
-                                >
-                                    {tab}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="p-4">
-                        <div className="relative mb-4">
-                            <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400"/>
-                            <input
-                                type="text"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Search blocks and pages"
-                                className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
+                    }`}
+                >
+                    <div className="flex flex-col h-full">
+                        <div className="border-b border-gray-200">
+                            <div className="flex p-2 space-x-1">
+                                {['insert', 'pages', 'themes'].map((tab) => (
+                                    <button
+                                        key={tab}
+                                        onClick={() => setActiveTab(tab as typeof activeTab)}
+                                        className={`flex-1 px-4 py-2 text-sm rounded transition-colors capitalize ${
+                                            activeTab === tab ? 'bg-gray-100' : 'hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        {tab}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
-                        {activeTab === 'insert' && (
-                            <BlockLibrary
-                                searchTerm={searchTerm}
-                                onSearchChange={setSearchTerm}
-                                onBlockSelect={handleBlockSelect}
-                                onCombinationSelect={handleCombinationSelect}
-                            />
-                        )}
+                        <div className="flex-1 overflow-y-auto p-4">
+                            <div className="mb-4">
+                                <div className="relative">
+                                    <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400"/>
+                                    <input
+                                        type="text"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        placeholder="Search blocks and pages"
+                                        className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded"
+                                    />
+                                </div>
+                            </div>
 
-                        {activeTab === 'pages' && (
-                            <PageSettingsEditor
-                                pages={site.pages.filter(page =>
-                                    page.title.toLowerCase().includes(searchTerm.toLowerCase())
-                                )}
-                                currentPage={currentPage}
-                                onPageSelect={setCurrentPage}
-                                onUpdate={(newPages) => {
-                                    handleSiteUpdate({ ...site, pages: newPages });
-                                }}
-                                onCreatePage={handleCreatePage}
-                                onDeletePage={(pageId) => {
-                                    const confirmed = window.confirm('Are you sure you want to delete this page?');
-                                    if (confirmed) {
-                                        handleSiteUpdate({
-                                            ...site,
-                                            pages: site.pages.filter(p => p.id !== pageId)
-                                        });
-                                        if (currentPage?.id === pageId) {
-                                            setCurrentPage(site.pages[0]);
-                                        }
-                                    }
-                                }}
-                            />
-                        )}
+                            {activeTab === 'insert' && (
+                                <BlockLibrary
+                                    searchTerm={searchTerm}
+                                    onSearchChange={setSearchTerm}
+                                    onBlockSelect={handleBlockSelect}
+                                    onCombinationSelect={handleCombinationSelect}
+                                />
+                            )}
 
-                        {activeTab === 'themes' && (
-                            <ThemeEditor
-                                currentTheme={site.theme}
-                                onThemeChange={handleThemeChange}
-                            />
-                        )}
+                            {activeTab === 'pages' && site && (
+                                <PageSettingsEditor
+                                    pages={pagesToPageSettings(
+                                        site.pages.filter(page =>
+                                            page.title.toLowerCase().includes(searchTerm.toLowerCase())
+                                        )
+                                    )}
+                                    onUpdate={handlePageSettingsUpdate}
+                                    onDeletePage={handlePageDelete}
+                                    currentPage={currentPage}
+                                    onCreatePage={handleCreatePage}
+                                    onPageSelect={setCurrentPage}
+                                />
+                            )}
+
+                            {activeTab === 'themes' && site && (
+                                <ThemeEditor
+                                    currentTheme={site.theme}
+                                    onThemeChange={handleThemeChange}
+                                />
+                            )}
+                        </div>
                     </div>
                 </div>
 

@@ -1,5 +1,5 @@
 import type { Block, BlockSettings, BlockContent } from '../../types';
-import {blockTemplates} from "@/components/BlockEditor/blockTemplates";
+import { blockTemplates } from "./blockTemplates";  // Changed from @/components/BlockEditor/blockTemplates
 
 interface BlockTemplate {
     id: string;
@@ -59,62 +59,11 @@ export const blockCombinations: BlockCombination[] = [
                                     padding: 'normal',
                                     fontSize: 'large'
                                 }
-                            },
-                            {
-                                type: 'text',
-                                content: {
-                                    text: `Description of feature ${i + 1}`,
-                                    format: {
-                                        bold: false,
-                                        italic: false,
-                                        underline: false,
-                                        strikethrough: false
-                                    }
-                                },
-                                settings: {
-                                    ...defaultSettings,
-                                    alignment: 'center',
-                                    padding: 'small'
-                                }
                             }
-                        ]
+                        ] as Block[]
                     }))
                 },
-                settings: {
-                    ...defaultSettings,
-                    width: 'wide',
-                    alignment: 'center',
-                    padding: 'large'
-                }
-            }
-        ]
-    },
-    {
-        id: 'testimonials-carousel',
-        name: 'Testimonials Carousel',
-        description: 'Scrollable testimonials with images and quotes',
-        category: 'Social Proof',
-        tags: ['testimonials', 'reviews', 'quotes'],
-        blocks: [
-            {
-                type: 'gallery',
-                content: {
-                    images: Array(3).fill({
-                        url: '',
-                        alt: 'Testimonial',
-                        caption: 'Customer testimonial here',
-                        width: 300,
-                        height: 200
-                    }),
-                    galleryType: 'carousel',
-                    columns: 3
-                },
-                settings: {
-                    ...defaultSettings,
-                    width: 'wide',
-                    alignment: 'center',
-                    padding: 'large'
-                }
+                settings: defaultSettings
             }
         ]
     }

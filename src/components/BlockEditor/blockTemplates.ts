@@ -1,4 +1,4 @@
-import type { Block, BlockType, BlockSettings, BlockContent } from '../../types';
+import type { Block, BlockType, BlockSettings, BlockContent, GalleryBlockContent } from '../../types';
 
 interface BlockTemplate {
     id: string;
@@ -74,8 +74,8 @@ export const blockTemplates: BlockTemplate[] = [
             content: {
                 images: [],
                 layout: 'grid' as const,
-                columns: 3
-            },
+                columnCount: 3  // Changed from columns to columnCount
+            } as GalleryBlockContent,
             settings: {
                 ...defaultSettings,
                 width: 'wide'

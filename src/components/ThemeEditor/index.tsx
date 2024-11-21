@@ -1,10 +1,11 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Palette, Type, Layout, Grid, Sliders } from 'lucide-react';
+import React, { useState } from 'react';
+import { Palette, Type, Layout, Grid } from 'lucide-react';
 import { ColorSection } from './sections/ColorSection';
 import { TypographySection } from './sections/TypographySection';
 import { SpacingSection } from './sections/SpacingSection';
 import { ComponentsSection } from './sections/ComponentsSection';
-import type { Theme } from '../../types';
+import type { Theme, ThemeTypography, ThemeSpacing } from '../../types';
+import { defaultTheme } from './themeSystem';
 
 interface ThemeEditorProps {
     currentTheme: Theme;
@@ -24,6 +25,10 @@ export const ThemeEditor: React.FC<ThemeEditorProps> = ({
         { id: 'components', label: 'Components', icon: Grid }
     ] as const;
 
+    // Use default theme values if properties are undefined
+    const typography: ThemeTypography = currentTheme.typography || defaultTheme.typography;
+    const spacing: ThemeSpacing = currentTheme.spacing || defaultTheme.spacing;
+
     const renderContent = () => {
         switch (activeTab) {
             case 'colors':
@@ -36,15 +41,21 @@ export const ThemeEditor: React.FC<ThemeEditorProps> = ({
             case 'typography':
                 return (
                     <TypographySection
-                        typography={currentTheme.typography}
-                        onChange={(typography) => onThemeChange({ ...currentTheme, typography })}
+                        typography={typography}
+                        onChange={(newTypography) => onThemeChange({
+                            ...currentTheme,
+                            typography: newTypography
+                        })}
                     />
                 );
             case 'spacing':
                 return (
                     <SpacingSection
-                        spacing={currentTheme.spacing}
-                        onChange={(spacing) => onThemeChange({ ...currentTheme, spacing })}
+                        spacing={spacing}
+                        onChange={(newSpacing) => onThemeChange({
+                            ...currentTheme,
+                            spacing: newSpacing
+                        })}
                     />
                 );
             case 'components':
@@ -59,12 +70,11 @@ export const ThemeEditor: React.FC<ThemeEditorProps> = ({
 
     return (
         <div className="h-full flex flex-col bg-white">
-            {/* Tabs */}
             <div className="flex p-2 space-x-1 border-b border-gray-200">
                 {tabs.map(({ id, label, icon: Icon }) => (
                     <button
                         key={id}
-                        onClick={() => setActiveTab(id)}
+                        onClick={() => setActiveTab(id as typeof activeTab)}
                         className={`
                             flex items-center space-x-2 px-4 py-2 text-sm rounded-md flex-1
                             ${activeTab === id
@@ -79,7 +89,6 @@ export const ThemeEditor: React.FC<ThemeEditorProps> = ({
                 ))}
             </div>
 
-            {/* Content */}
             <div className="flex-1 overflow-y-auto p-4">
                 {renderContent()}
             </div>

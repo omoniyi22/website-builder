@@ -159,7 +159,7 @@ export interface Column {
 export interface Site {
     id: string;
     name: string;
-    pages: Page[];
+    pages: Page[];  // Make sure this is required, not optional
     theme: Theme;
 }
 
@@ -201,7 +201,7 @@ export interface GalleryBlockContent extends BlockContent {
         height: number;
     }>;
     layout: 'grid' | 'masonry' | 'carousel';
-    columns: number;
+    columnCount: number;  // Renamed from 'columns' to avoid conflict
 }
 
 export interface VideoBlockContent extends BlockContent {
