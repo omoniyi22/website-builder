@@ -12,11 +12,11 @@ interface BlockLibraryProps {
 }
 
 export const BlockLibrary: React.FC<BlockLibraryProps> = ({
-                                                              searchTerm,
-                                                              onSearchChange,
-                                                              onBlockSelect,
-                                                              onCombinationSelect
-                                                          }) => {
+    searchTerm,
+    onSearchChange,
+    onBlockSelect,
+    onCombinationSelect
+}) => {
     const filteredContent = useMemo(() => {
         const term = searchTerm.toLowerCase();
 

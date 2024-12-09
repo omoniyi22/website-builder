@@ -4,7 +4,11 @@ module.exports = {
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        custom: ['productRegular', 'preoductBold'], // Add your custom font
+      },
+    },
   },
   plugins: [],
 }

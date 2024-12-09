@@ -4,12 +4,14 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import debounce from 'lodash/debounce';
 import { Menu, Search, Globe, Lock, Trash2, Plus } from 'lucide-react';
 
-import { BlockEditor } from './BlockEditor';
-import { PageList } from './PageList';
+import Navbar from "./../components/Navbar/Editor"
+
+// import { BlockEditor } from './BlockEditor';
+// import { PageList } from './PageList';
 import { ThemeEditor } from './ThemeEditor';
 import { PageSettingsEditor } from './PageSettings';
-import { PublishModal } from './PublishModal';
-import { PreviewFrame } from './PreviewFrame';
+// import { PublishModal } from './PublishModal';
+// import { PreviewFrame } from './PreviewFrame';
 import { BlockLibrary } from './BlockLibrary';
 
 import { useToast } from '../hooks/useToast';
@@ -17,6 +19,9 @@ import { useSiteData } from '../hooks/useSiteData';
 import { useAuth } from '../hooks/useAuth';
 
 import type { Site, Page, Theme, PageSettings } from '../types';
+import { Navigation } from './Navigation';
+
+
 import { createBlocksFromCombination } from './BlockEditor/blockCombination';
 import { createBlockFromTemplate } from './BlockEditor/blockTemplates';
 import { pageSettingsToPage, pageToPageSettings } from '../types';
@@ -27,6 +32,15 @@ const pagesToPageSettings = (pages: Page[]): PageSettings[] => {
 };
 
 // Helper function to convert PageSettings array to Page array
+const pages: any[] = [
+    { id: '1', title: 'Home', parentId: null, order: 1, showInNav: true, isDummy: false, isPublished: true },
+    { id: '2', title: 'About Us', parentId: null, order: 2, showInNav: true, isDummy: false, isPublished: true },
+    { id: '3', title: 'Services', parentId: null, order: 3, showInNav: true, isDummy: false, isPublished: true },
+    { id: '4', title: 'Contact', parentId: null, order: 4, showInNav: true, isDummy: false, isPublished: false },
+    { id: '5', title: 'Web Development', parentId: '3', order: 1, showInNav: true, isDummy: false, isPublished: true },
+    { id: '6', title: 'SEO Services', parentId: '3', order: 2, showInNav: true, isDummy: false, isPublished: true },
+];
+
 const pageSettingsToPages = (settings: PageSettings[], existingPages: Page[]): Page[] => {
     return settings.map(setting => {
         const existingPage = existingPages.find(p => p.id === setting.id);
@@ -57,24 +71,62 @@ const pageSettingsToPages = (settings: PageSettings[], existingPages: Page[]): P
     });
 };
 
-const debouncedSave = debounce((siteData: Site, saveSite: (site: Site) => Promise<void>, toast: any) => {
-    saveSite(siteData).then(() => {
-        toast({
-            title: 'Changes saved',
-            type: 'success'
-        });
-    }).catch((error) => {
-        toast({
-            title: 'Save failed',
-            description: 'Your changes could not be saved. Please try again.',
-            type: 'error'
-        });
-    });
-}, 2000);
+// const debouncedSave = debounce((siteData: Site, saveSite: (site: Site) => Promise<void>, toast: any) => {
+//     saveSite(siteData).then(() => {
+//         toast({
+//             title: 'Changes saved',
+//             type: 'success'
+//         });
+//     }).catch((error) => {
+//         toast({
+//             title: 'Save failed',
+//             description: 'Your changes could not be saved. Please try again.',
+//             type: 'error'
+//         });
+//     });
+// }, 2000);
 
 export const GoogleSitesClone: React.FC = () => {
+
+
+    const handlePageSelect = (page: Page) => {
+        setCurrentPage(page);
+        console.log(`Navigated to: ${page.title}`);
+    };
+
     // Core state
-    const [site, setSite] = useState<Site | null>(null);
+    const [site, setSite] = useState<Site | null>(
+        {
+            id: '1',
+            name: 'Untitled Site',
+            pages: [], // Initialize with empty array
+            theme: {
+                id: '1',
+                name: 'Default',
+                colors: {
+                    primary: '#3B82F6',
+                    secondary: '#6B7280',
+                    accent: '#10B981',
+                    background: {
+                        primary: '#FFFFFF',
+                        secondary: '#F3F4F6',
+                        accent: '#F0FDF4'
+                    },
+                    text: {
+                        primary: '#1F2937',
+                        secondary: '#4B5563',
+                        accent: '#059669',
+                        inverse: '#FFFFFF'
+                    }
+                },
+                fonts: {
+                    heading: 'Inter',
+                    body: 'Inter'
+                }
+            }
+        }
+    );
+
     const [currentPage, setCurrentPage] = useState<Page | null>(null);
     const [activeTab, setActiveTab] = useState<'insert' | 'pages' | 'themes'>('insert');
     const [rightPanelOpen, setRightPanelOpen] = useState(true);
@@ -83,6 +135,8 @@ export const GoogleSitesClone: React.FC = () => {
     const [showPublishModal, setShowPublishModal] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+
+    // const [check, setNav] = useState(false)
 
     // Undo/Redo state
     const [undoStack, setUndoStack] = useState<Site[]>([]);
@@ -107,22 +161,22 @@ export const GoogleSitesClone: React.FC = () => {
     }, []);
 
     // Initialize site data
-    useEffect(() => {
-        const loadSite = async () => {
-            try {
-                const data = await getSiteData();
-                setSite(data);
-                setCurrentPage(data.pages[0]);
-            } catch (error) {
-                toast({
-                    title: 'Error loading site',
-                    description: 'Failed to load site data. Please try again.',
-                    type: 'error'
-                });
-            }
-        };
-        loadSite();
-    }, [getSiteData, toast]);
+    // useEffect(() => {
+    //     const loadSite = async () => {
+    //         try {
+    //             const data = await getSiteData();
+    //             setSite(data);
+    //             setCurrentPage(data.pages[0]);
+    //         } catch (error) {
+    //             toast({
+    //                 title: 'Error loading site',
+    //                 description: 'Failed to load site data. Please try again.',
+    //                 type: 'error'
+    //             });
+    //         }
+    //     };
+    //     loadSite();
+    // }, [getSiteData, toast]);
 
     // Handle site updates
     const handleSiteUpdate = useCallback((updates: Partial<Site>) => {
@@ -132,10 +186,10 @@ export const GoogleSitesClone: React.FC = () => {
         setSite(newSite);
 
         // Debounce the save operation
-        debouncedSave(newSite, saveSite, toast);
+        // debouncedSave(newSite, saveSite, toast);
     }, [site, saveSite, toast]);
 
-// Move handlePageUpdate before handleBlockSelect
+    // Move handlePageUpdate before handleBlockSelect
     const handlePageUpdate = useCallback((pageId: string, updates: Partial<Page>) => {
         if (!site) return;
         const newPages = site.pages.map(p =>
@@ -189,194 +243,125 @@ export const GoogleSitesClone: React.FC = () => {
         });
     }, [currentPage, handlePageUpdate]);
 
-// Replace the entire handleCreatePage function with this version:
-    const handleCreatePage = useCallback(() => {
-        console.log("Starting page creation");
-        if (!site) {
-            console.log("No site available");
-            return;
-        }
+    // Replace the entire handleCreatePage function with this version:
+    // const handleCreatePage = useCallback(() => {
+    //     console.log("Starting page creation");
+    //     if (!site) {
+    //         console.log("No site available");
+    //         return;
+    //     }
 
-        const now = new Date();
-        const pageId = Date.now().toString();
+    //     const now = new Date();
+    //     const pageId = Date.now().toString();
 
-        const newPage: Page = {
-            id: pageId,
-            title: 'New Page',
-            slug: `page-${pageId}`,
-            urlPrefix: `page-${pageId}`,
-            showInNav: true,
-            parentId: null,
-            isDummy: false,
-            order: site.pages.length,
-            children: [],
-            headerConfig: {
-                enabled: false,
-                height: 200
-            },
-            footerConfig: {
-                enabled: false,
-                content: ''
-            },
-            content: [],
-            isPublished: false,
-            createdAt: now,
-            updatedAt: now
-        };
+    //     const newPage: Page = {
+    //         id: pageId,
+    //         title: 'New Page',
+    //         slug: `page-${pageId}`,
+    //         urlPrefix: `page-${pageId}`,
+    //         showInNav: true,
+    //         parentId: null,
+    //         isDummy: false,
+    //         order: site.pages.length,
+    //         children: [],
+    //         headerConfig: {
+    //             enabled: false,
+    //             height: 200
+    //         },
+    //         footerConfig: {
+    //             enabled: false,
+    //             content: ''
+    //         },
+    //         content: [],
+    //         isPublished: false,
+    //         createdAt: now,
+    //         updatedAt: now
+    //     };
 
-        const newPages = [...site.pages, newPage];
+    //     const newPages = [...site.pages, newPage];
 
-        // Update site in a single operation
-        const updates = {
-            ...site,
-            pages: newPages
-        };
+    //     // Update site in a single operation
+    //     const updates = {
+    //         ...site,
+    //         pages: newPages
+    //     };
 
-        setSite(updates);
-        setCurrentPage(newPage);
-        console.log("Page creation complete");
-    }, [site]);  // Only depend on site
+    //     setSite(updates);
+    //     setCurrentPage(newPage);
+    //     console.log("Page creation complete");
+    // }, [site]);  // Only depend on site
 
-    // Publishing
-    const handlePublish = async () => {
-        if (!site) return;
+    // // Publishing
+    // const handlePublish = async () => {
+    //     if (!site) return;
 
-        setIsPublishing(true);
-        try {
-            await publishSite(site);
-            toast({
-                title: 'Site published successfully',
-                type: 'success'
-            });
-        } catch (error) {
-            toast({
-                title: 'Publishing failed',
-                description: 'Could not publish your site. Please try again.',
-                type: 'error'
-            });
-        } finally {
-            setIsPublishing(false);
-            setShowPublishModal(false);
-        }
-    };
+    //     setIsPublishing(true);
+    //     try {
+    //         await publishSite(site);
+    //         toast({
+    //             title: 'Site published successfully',
+    //             type: 'success'
+    //         });
+    //     } catch (error) {
+    //         toast({
+    //             title: 'Publishing failed',
+    //             description: 'Could not publish your site. Please try again.',
+    //             type: 'error'
+    //         });
+    //     } finally {
+    //         setIsPublishing(false);
+    //         setShowPublishModal(false);
+    //     }
+    // };
 
-    // Theme handling
+    // // Theme handling
     const handleThemeChange = (theme: Theme) => {
         handleSiteUpdate({ theme });
     };
 
-    // Undo/Redo
-    const handleUndo = () => {
-        if (undoStack.length === 0) return;
+    // // Undo/Redo
+    // const handleUndo = () => {
+    //     if (undoStack.length === 0) return;
 
-        const prevState = undoStack[undoStack.length - 1];
-        const currentState = site;
+    //     const prevState = undoStack[undoStack.length - 1];
+    //     const currentState = site;
 
-        setUndoStack(prev => prev.slice(0, -1));
-        if (currentState) {
-            setRedoStack(prev => [...prev, currentState]);
-        }
-        setSite(prevState);
-    };
+    //     setUndoStack(prev => prev.slice(0, -1));
+    //     if (currentState) {
+    //         setRedoStack(prev => [...prev, currentState]);
+    //     }
+    //     setSite(prevState);
+    // };
 
-    const handleRedo = () => {
-        if (redoStack.length === 0) return;
+    // const handleRedo = () => {
+    //     if (redoStack.length === 0) return;
 
-        const nextState = redoStack[redoStack.length - 1];
-        const currentState = site;
+    //     const nextState = redoStack[redoStack.length - 1];
+    //     const currentState = site;
 
-        setRedoStack(prev => prev.slice(0, -1));
-        if (currentState) {
-            setUndoStack(prev => [...prev, currentState]);
-        }
-        setSite(nextState);
-    };
+    //     setRedoStack(prev => prev.slice(0, -1));
+    //     if (currentState) {
+    //         setUndoStack(prev => [...prev, currentState]);
+    //     }
+    //     setSite(nextState);
+    // };
 
-    if (!site) {
-        return <div>Loading...</div>;
-    }
+    // if (!site) {
+    //     return <div>Loading...</div>;
+    // }
 
     return (
         <DndProvider backend={HTML5Backend}>
             <div className="flex h-screen bg-white">
                 {/* Top Navigation */}
-                <div
-                    className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 flex items-center px-4 z-50">
-                    <button
-                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                        onClick={() => setRightPanelOpen(!rightPanelOpen)}
-                    >
-                        <Menu className="w-5 h-5 text-gray-600"/>
-                    </button>
+                {/* <Navigation pages={pages}
+                    currentPage={currentPage}
+                    onPageSelect={handlePageSelect} /> */}
 
-                    <input
-                        type="text"
-                        value={site.name}
-                        onChange={(e) => handleSiteUpdate({name: e.target.value})}
-                        className="ml-4 px-2 py-1 text-lg font-normal hover:bg-gray-100 rounded outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Untitled site"
-                    />
-
-                    <div className="ml-auto flex items-center space-x-2">
-                        <button
-                            onClick={() => handleUndo()}
-                            disabled={undoStack.length === 0}
-                            className="p-2 hover:bg-gray-100 rounded transition-colors disabled:opacity-50"
-                            title="Undo"
-                        >
-                            <svg className="w-5 h-5" viewBox="0 0 24 24">
-                                <path
-                                    d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/>
-                            </svg>
-                        </button>
-
-                        <button
-                            onClick={() => handleRedo()}
-                            disabled={redoStack.length === 0}
-                            className="p-2 hover:bg-gray-100 rounded transition-colors disabled:opacity-50"
-                            title="Redo"
-                        >
-                            <svg className="w-5 h-5" viewBox="0 0 24 24">
-                                <path
-                                    d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/>
-                            </svg>
-                        </button>
-
-                        <button
-                            onClick={() => setShowPreview(!showPreview)}
-                            className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                        >
-                            {showPreview ? 'Edit' : 'Preview'}
-                        </button>
-
-                        <button
-                            onClick={() => setShowPublishModal(true)}
-                            disabled={isPublishing}
-                            className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center"
-                        >
-                            {isPublishing ? (
-                                <>
-                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                                strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor"
-                                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Publishing...
-                                </>
-                            ) : (
-                                <>
-                                    <Globe className="w-4 h-4 mr-1"/>
-                                    Publish
-                                </>
-                            )}
-                        </button>
-                    </div>
-                </div>
+                <Navbar />
 
                 {/* Left Sidebar - Pages */}
-                <PageList
+                {/* <PageList
                     pages={site?.pages || []}
                     currentPage={currentPage}
                     onPageSelect={memoizedHandlePageSelect}
@@ -387,12 +372,12 @@ export const GoogleSitesClone: React.FC = () => {
                             handleCreatePage();
                         }
                     }}
-                />
+                /> */}
 
                 {/* Main Content Area */}
-                <div className="flex-1 ml-64 mt-16">
+                {/* <div className="flex-1 ml-64 mt-16">
                     {showPreview ? (
-                        <PreviewFrame site={site} currentPage={currentPage}/>
+                        <PreviewFrame site={site} currentPage={currentPage} />
                     ) : (
                         <BlockEditor
                             blocks={currentPage?.content || []}
@@ -407,25 +392,23 @@ export const GoogleSitesClone: React.FC = () => {
                             onDraggingChange={setIsDragging}
                         />
                     )}
-                </div>
+                </div> */}
 
                 {/* Right Sidebar */}
                 <div
-                    className={`fixed right-0 top-16 bottom-0 w-80 bg-white border-l border-gray-200 transform transition-transform duration-300 ${
-                        rightPanelOpen ? 'translate-x-0' : 'translate-x-full'
-                    }`}
+                    className={`fixed right-0 top-16 bottom-0 w-80 bg-white border-l border-gray-200 transform transition-transform duration-300 ${rightPanelOpen ? 'translate-x-0' : 'translate-x-full'
+                        }`}
                 >
                     <div className="flex flex-col h-full">
-                        <div className="border-b border-gray-200">
+                        <div className="border-b border-gray-200 ">
                             <div className="flex p-2 space-x-1">
                                 {['insert', 'pages', 'themes'].map((tab) => (
                                     <button
                                         key={tab}
                                         onClick={() => setActiveTab(tab as typeof activeTab)}
-                                        className={`flex-1 px-4 py-2 text-sm rounded transition-colors capitalize ${
-                                            activeTab === tab ? 'bg-gray-100' : 'hover:bg-gray-50'
-                                        }`}
-                                    >
+                                        className={`flex-1 px-4 py-2 text-sm rounded transition-colors capitalize ${activeTab === tab ? 'bg-gray-100' : 'hover:bg-gray-50'
+                                            }`}
+                                    >                                    
                                         {tab}
                                     </button>
                                 ))}
@@ -435,7 +418,7 @@ export const GoogleSitesClone: React.FC = () => {
                         <div className="flex-1 overflow-y-auto p-4">
                             <div className="mb-4">
                                 <div className="relative">
-                                    <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400"/>
+                                    <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400" />
                                     <input
                                         type="text"
                                         value={searchTerm}
@@ -465,7 +448,7 @@ export const GoogleSitesClone: React.FC = () => {
                                     onUpdate={handlePageSettingsUpdate}
                                     onDeletePage={handlePageDelete}
                                     currentPage={currentPage}
-                                    onCreatePage={handleCreatePage}
+                                    // onCreatePage={handleCreatePage}
                                     onPageSelect={setCurrentPage}
                                 />
                             )}
@@ -481,14 +464,14 @@ export const GoogleSitesClone: React.FC = () => {
                 </div>
 
                 {/* Publish Modal */}
-                {showPublishModal && (
+                {/* {showPublishModal && (
                     <PublishModal
                         site={site}
                         onClose={() => setShowPublishModal(false)}
                         onPublish={handlePublish}
                         isPublishing={isPublishing}
                     />
-                )}
+                )} */}
 
                 {/* Toast Container for notifications */}
                 <div className="fixed bottom-4 right-4 z-50">

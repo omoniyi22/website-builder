@@ -8,7 +8,7 @@ interface EmbedBlockContent extends BlockContent {
     originalContent?: string;
 }
 
-@customElement('site-embed-block')
+// @customElement('site-embed-block')
 export class EmbedBlock extends LitElement {
     @property({ type: Object }) block!: Block;
     @state() private isEditing = false;
@@ -134,7 +134,7 @@ export class EmbedBlock extends LitElement {
                     class="embed-content"
                     @click=${() => this.isEditing = true}
                 >
-                    <div .innerHTML=${this.getHtmlContent()}></div>
+                    <div.innerHTML=${this.getHtmlContent()}></div>
                 </div>
             </div>
         `;

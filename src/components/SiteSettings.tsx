@@ -7,9 +7,9 @@ interface SiteSettingsProps {
 }
 
 export const SiteSettings: React.FC<SiteSettingsProps> = ({
-                                                              site,
-                                                              onUpdate
-                                                          }) => {
+    site,
+    onUpdate
+}) => {
     return (
         <div className="p-4">
             <h2 className="text-lg font-bold mb-4">Site Settings</h2>

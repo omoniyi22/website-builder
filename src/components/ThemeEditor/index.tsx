@@ -13,9 +13,9 @@ interface ThemeEditorProps {
 }
 
 export const ThemeEditor: React.FC<ThemeEditorProps> = ({
-                                                            currentTheme,
-                                                            onThemeChange
-                                                        }) => {
+    currentTheme,
+    onThemeChange
+}) => {
     const [activeTab, setActiveTab] = useState<'colors' | 'typography' | 'spacing' | 'components'>('colors');
 
     const tabs = [
@@ -78,9 +78,9 @@ export const ThemeEditor: React.FC<ThemeEditorProps> = ({
                         className={`
                             flex items-center space-x-2 px-4 py-2 text-sm rounded-md flex-1
                             ${activeTab === id
-                            ? 'bg-blue-50 text-blue-600'
-                            : 'text-gray-600 hover:bg-gray-50'
-                        }
+                                ? 'bg-blue-50 text-blue-600'
+                                : 'text-gray-600 hover:bg-gray-50'
+                            }
                         `}
                     >
                         <Icon className="w-4 h-4" />
