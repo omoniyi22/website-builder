@@ -2,14 +2,14 @@ import React from 'react';
 import type { Site, Page, Block, TextBlockContent } from '../types';
 
 interface PreviewFrameProps {
-    site: Site;
+    site: Site | null;
     currentPage: Page | null;
 }
 
 export const PreviewFrame: React.FC<PreviewFrameProps> = ({
-                                                              site,
-                                                              currentPage
-                                                          }) => {
+    site,
+    currentPage
+}) => {
     if (!currentPage) return null;
 
     const renderBlockContent = (block: Block) => {
@@ -30,8 +30,8 @@ export const PreviewFrame: React.FC<PreviewFrameProps> = ({
     };
 
     return (
-        <div className="bg-white h-full">
-            <div className="max-w-4xl mx-auto p-8">
+        <div className="bg-[#F1F3F4] h-full">
+            <div className="max-w-4xl mx-auto p-8 border">
                 <h1 className="text-3xl font-bold mb-8">{currentPage.title}</h1>
                 <div>
                     {currentPage.content.map(block => (

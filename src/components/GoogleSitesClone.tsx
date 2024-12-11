@@ -6,12 +6,12 @@ import { Menu, Search, Globe, Lock, Trash2, Plus } from 'lucide-react';
 
 import Navbar from "./../components/Navbar/Editor"
 
-// import { BlockEditor } from './BlockEditor';
+import { EditorPlate } from './BlockEditor/EditorPlate';
 // import { PageList } from './PageList';
 import { ThemeEditor } from './ThemeEditor';
 import { PageSettingsEditor } from './PageSettings';
 // import { PublishModal } from './PublishModal';
-// import { PreviewFrame } from './PreviewFrame';
+import { PreviewFrame } from './PreviewFrame';
 import { BlockLibrary } from './BlockLibrary';
 
 import { useToast } from '../hooks/useToast';
@@ -87,8 +87,6 @@ const pageSettingsToPages = (settings: PageSettings[], existingPages: Page[]): P
 // }, 2000);
 
 export const GoogleSitesClone: React.FC = () => {
-
-
     const handlePageSelect = (page: Page) => {
         setCurrentPage(page);
         console.log(`Navigated to: ${page.title}`);
@@ -99,7 +97,8 @@ export const GoogleSitesClone: React.FC = () => {
         {
             id: '1',
             name: 'Untitled Site',
-            pages: [], // Initialize with empty array
+            pages: [], 
+            // Initialize with empty array
             theme: {
                 id: '1',
                 name: 'Default',
@@ -126,6 +125,8 @@ export const GoogleSitesClone: React.FC = () => {
             }
         }
     );
+
+
 
     const [currentPage, setCurrentPage] = useState<Page | null>(null);
     const [activeTab, setActiveTab] = useState<'insert' | 'pages' | 'themes'>('insert');
@@ -375,24 +376,24 @@ export const GoogleSitesClone: React.FC = () => {
                 /> */}
 
                 {/* Main Content Area */}
-                {/* <div className="flex-1 ml-64 mt-16">
-                    {showPreview ? (
+                <div className="flex-1  mt-16">
+                    {/* {showPreview ? (
                         <PreviewFrame site={site} currentPage={currentPage} />
-                    ) : (
-                        <BlockEditor
-                            blocks={currentPage?.content || []}
-                            onBlocksChange={(newBlocks) => {
-                                if (!currentPage) return;
-                                handlePageUpdate(currentPage.id, {
-                                    content: newBlocks,
-                                    updatedAt: new Date()
-                                });
-                            }}
-                            isDragging={isDragging}
-                            onDraggingChange={setIsDragging}
-                        />
-                    )}
-                </div> */}
+                    ) : ( */}
+                    <EditorPlate
+                        blocks={currentPage?.content || []}
+                        onBlocksChange={(newBlocks) => {
+                            if (!currentPage) return;
+                            handlePageUpdate(currentPage.id, {
+                                content: newBlocks,
+                                updatedAt: new Date()
+                            });
+                        }}
+                        isDragging={isDragging}
+                        onDraggingChange={setIsDragging}
+                    />
+                    {/* )} */}
+                </div>
 
                 {/* Right Sidebar */}
                 <div
@@ -408,7 +409,7 @@ export const GoogleSitesClone: React.FC = () => {
                                         onClick={() => setActiveTab(tab as typeof activeTab)}
                                         className={`flex-1 px-4 py-2 text-sm rounded transition-colors capitalize ${activeTab === tab ? 'bg-gray-100' : 'hover:bg-gray-50'
                                             }`}
-                                    >                                    
+                                    >
                                         {tab}
                                     </button>
                                 ))}

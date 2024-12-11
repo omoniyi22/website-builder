@@ -3,7 +3,6 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import type { Block } from '../../types';
 import { BLOCK_TYPES } from './blockTypes';
 
-
 interface BlockEditorProps {
     blocks: Block[];
     onBlocksChange: (blocks: Block[]) => void;
@@ -11,12 +10,14 @@ interface BlockEditorProps {
     onDraggingChange: (isDragging: boolean) => void;
 }
 
-export const BlockEditor: React.FC<BlockEditorProps> = ({
+export const EditorPlate: React.FC<BlockEditorProps> = ({
     blocks,
     onBlocksChange,
     isDragging,
     onDraggingChange
+    
 }) => {
+    
     const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
     const [focusedBlockId, setFocusedBlockId] = useState<string | null>(null);
     const editorRef = useRef<HTMLDivElement>(null);

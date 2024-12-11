@@ -20,14 +20,14 @@ interface DragItem {
 }
 
 export const BlockWrapper: React.FC<BlockWrapperProps> = ({
-                                                              block,
-                                                              index,
-                                                              moveBlock,
-                                                              duplicateBlock,
-                                                              deleteBlock,
-                                                              onSettingsOpen,
-                                                              children
-                                                          }) => {
+    block,
+    index,
+    moveBlock,
+    duplicateBlock,
+    deleteBlock,
+    onSettingsOpen,
+    children
+}) => {
     const ref = useRef<HTMLDivElement>(null);
 
     const [{ isDragging }, drag, preview] = useDrag({
