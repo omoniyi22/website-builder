@@ -15,9 +15,9 @@ export const EditorPlate: React.FC<BlockEditorProps> = ({
     onBlocksChange,
     isDragging,
     onDraggingChange
-    
+
 }) => {
-    
+
     const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
     const [focusedBlockId, setFocusedBlockId] = useState<string | null>(null);
     const editorRef = useRef<HTMLDivElement>(null);
@@ -35,6 +35,25 @@ export const EditorPlate: React.FC<BlockEditorProps> = ({
     }, [blocks, onBlocksChange]);
 
     // Initialize event listeners
+
+    // Usage
+    const pageStructure = {
+        type: 'div',
+        props: { className: 'editor-container' },
+        children: [
+            {
+                type: 'header', props: {}, children: [
+                    { type: 'h1', props: {}, children: ['Dynamic Page'] }]
+            }
+        ]
+    };
+
+    const componentFactory = (type: any, props: any, children: any) => {
+        return React.createElement(type, props, ...children.map((child: any) => componentFactory(child.type, child.props, child.children || [])));
+    };
+
+    const page = componentFactory(pageStructure.type, pageStructure.props, pageStructure.children);
+
     useEffect(() => {
         const editor = editorRef.current;
         if (editor) {
@@ -59,7 +78,7 @@ export const EditorPlate: React.FC<BlockEditorProps> = ({
                     } ${focusedBlockId === block.id ? 'focused' : ''}`}
                 onClick={() => setSelectedBlockId(block.id)}
             >
-
+                sdms'dm'
                 {/* Block controls */}
                 <div className="block-controls">
                     {/* Your controls JSX */}
@@ -74,6 +93,7 @@ export const EditorPlate: React.FC<BlockEditorProps> = ({
                 })}
             </div>
         );
+
     }, [selectedBlockId, focusedBlockId]);
 
     return (

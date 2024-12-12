@@ -12,13 +12,13 @@ interface PageSettingsEditorProps {
 }
 
 export const PageSettingsEditor: React.FC<PageSettingsEditorProps> = ({
-                                                                          pages,
-                                                                          onUpdate,
-                                                                          onDeletePage,
-                                                                          currentPage,
-                                                                          onCreatePage,
-                                                                          onPageSelect
-                                                                      }) => {
+    pages,
+    onUpdate,
+    onDeletePage,
+    currentPage,
+    onCreatePage,
+    onPageSelect
+}) => {
     const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
     const [draggedItem, setDraggedItem] = useState<string | null>(null);
 

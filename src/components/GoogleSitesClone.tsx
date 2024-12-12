@@ -25,6 +25,7 @@ import { Navigation } from './Navigation';
 import { createBlocksFromCombination } from './BlockEditor/blockCombination';
 import { createBlockFromTemplate } from './BlockEditor/blockTemplates';
 import { pageSettingsToPage, pageToPageSettings } from '../types';
+import { defaultValue } from './defaultValues';
 
 // Helper function to convert Page array to PageSettings array
 const pagesToPageSettings = (pages: Page[]): PageSettings[] => {
@@ -97,7 +98,7 @@ export const GoogleSitesClone: React.FC = () => {
         {
             id: '1',
             name: 'Untitled Site',
-            pages: [], 
+            pages: [],
             // Initialize with empty array
             theme: {
                 id: '1',
@@ -128,7 +129,7 @@ export const GoogleSitesClone: React.FC = () => {
 
 
 
-    const [currentPage, setCurrentPage] = useState<Page | null>(null);
+    const [currentPage, setCurrentPage] = useState<Page | null>(defaultValue);
     const [activeTab, setActiveTab] = useState<'insert' | 'pages' | 'themes'>('insert');
     const [rightPanelOpen, setRightPanelOpen] = useState(true);
     const [showPreview, setShowPreview] = useState(false);
@@ -378,7 +379,8 @@ export const GoogleSitesClone: React.FC = () => {
                 {/* Main Content Area */}
                 <div className="flex-1  mt-16">
                     {/* {showPreview ? (
-                        <PreviewFrame site={site} currentPage={currentPage} />
+                    
+                    <PreviewFrame site={site} currentPage={currentPage} />
                     ) : ( */}
                     <EditorPlate
                         blocks={currentPage?.content || []}

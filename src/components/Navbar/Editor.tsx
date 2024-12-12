@@ -197,6 +197,7 @@ function Navbar({ home }: { home?: boolean }) {
   return (
     <div
       className="fixed top-0 left-0 right-0 h-[4rem] bg-white border-b border-gray-200 flex items-center px-4 z-50">
+      
       {home &&
         <button
           className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -206,6 +207,7 @@ function Navbar({ home }: { home?: boolean }) {
           {/* <ArrowLeft strokeWidth={"1px"} size={"20px"} /> */}
         </button>
       }
+
       {home ?
         <>
           <img src={logo} alt="site_home" className='h-[39px] mx-3' />
