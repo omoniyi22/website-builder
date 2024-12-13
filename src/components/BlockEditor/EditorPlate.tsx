@@ -2,6 +2,7 @@ import "./editor.css"
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import type { Block } from '../../types';
 import { BLOCK_TYPES } from './blockTypes';
+import RenderPage from "./renderComponent";
 
 interface BlockEditorProps {
     blocks: Block[];
@@ -40,19 +41,21 @@ export const EditorPlate: React.FC<BlockEditorProps> = ({
     const pageStructure = {
         type: 'div',
         props: { className: 'editor-container' },
+        text: "Welcome to the homepage!",
+
         children: [
             {
                 type: 'header', props: {}, children: [
-                    { type: 'h1', props: {}, children: ['Dynamic Page'] }]
+                    { type: 'h1', props: {}, }]
             }
         ]
     };
 
-    const componentFactory = (type: any, props: any, children: any) => {
-        return React.createElement(type, props, ...children.map((child: any) => componentFactory(child.type, child.props, child.children || [])));
+    const componentFactory = (type: any, props: any, text: any, children: any, style?: any) => {
+        return React.createElement(type, props, text, ...children.map((child: any) => componentFactory(child.type, child.props, child.text, child.children || [])));
     };
 
-    const page = componentFactory(pageStructure.type, pageStructure.props, pageStructure.children);
+    const page = componentFactory(pageStructure.type, pageStructure.props, pageStructure.text, pageStructure.children);
 
     useEffect(() => {
         const editor = editorRef.current;
@@ -78,19 +81,19 @@ export const EditorPlate: React.FC<BlockEditorProps> = ({
                     } ${focusedBlockId === block.id ? 'focused' : ''}`}
                 onClick={() => setSelectedBlockId(block.id)}
             >
-                sdms'dm'
                 {/* Block controls */}
                 <div className="block-controls">
                     {/* Your controls JSX */}
                 </div>
 
                 {/* Render the Lit component */}
-                {React.createElement(tagName, {
+                {/* {React.createElement(tagName, {
                     'data-block-id': block.id,
                     block: block,
                     onFocus: () => setFocusedBlockId(block.id),
                     onBlur: () => setFocusedBlockId(null)
-                })}
+                })} */}
+                {page}
             </div>
         );
 
@@ -101,9 +104,10 @@ export const EditorPlate: React.FC<BlockEditorProps> = ({
             ref={editorRef}
             className="block-editor editor_box pt-[0.68rem]  min-h-screen bg-[rgb(232,234,237)] w-[calc(100%-320px)] mr-auto"
         >
-            <div className="editor_block border border-[#DADCE0] min-w-full pb-7  px-[3.7rem] bg-[#F1F3F4]">
-                <div className="main_block bg-white min-h-[100vh] shadow-[]">
-                    {blocks.map(renderBlock)}
+            <div className="editor_block border border-[#DADCE0] min-w-full pb-7 py-3 px-[3.7rem] bg-[#F1F3F4] ">
+                <div className="main_block  min-h-[100vh] shadow-[]">
+                    {/* {blocks.map(renderBlock)} */}
+                    <RenderPage blocks={blocks} />
                 </div>
             </div>
         </div>

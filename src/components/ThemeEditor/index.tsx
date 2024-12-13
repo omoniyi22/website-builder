@@ -89,7 +89,7 @@ export const ThemeEditor: React.FC<ThemeEditorProps> = ({
                 ))}
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-4 bg-black">
                 {renderContent()}
             </div>
         </div>

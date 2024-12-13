@@ -11,7 +11,10 @@ export type BlockType =
     | 'button'
     | 'spacer'
     | 'html'
-    | 'heading';
+    | 'heading'
+    | "a"
+    | "div"
+    | "span";
 
 export interface BlockSettings {
     width: 'full' | 'wide' | 'normal';
@@ -24,8 +27,77 @@ export interface BlockSettings {
         textColor?: string;
         borderRadius?: string;
         border?: string;
+        margin?: string;
+        marginTop?: string;
+        marginRight?: string;
+        marginBottom?: string;
+        marginLeft?: string;
+        boxShadow?: string;
+        opacity?: number;
+        transform?: string;
+        zIndex?: number;
+        display?: 'block' | 'inline-block' | 'flex' | 'inline-flex' | 'none';
+        position?: 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky';
+        top?: string;
+        right?: string;
+        bottom?: string;
+        left?: string;
+        width?: string;
+        height?: string;
+        maxWidth?: string;
+        maxHeight?: string;
+        overflow?: 'auto' | 'hidden' | 'scroll' | 'visible';
+        textAlign?: 'left' | 'center' | 'right' | 'justify';
+        lineHeight?: string;
+        letterSpacing?: string;
+        fontFamily?: string;
+        fontStyle?: 'normal' | 'italic' | 'oblique';
+        fontVariant?: string;
+        textDecoration?: 'none' | 'underline' | 'line-through' | 'overline';
+        textTransform?: 'none' | 'capitalize' | 'uppercase' | 'lowercase';
+        whiteSpace?: 'normal' | 'nowrap' | 'pre' | 'pre-wrap' | 'pre-line';
+        wordBreak?: 'normal' | 'break-word' | 'keep-all';
+        direction?: 'ltr' | 'rtl';
+        cursor?: 'auto' | 'default' | 'pointer' | 'move' | 'text' | 'wait' | 'help' | 'not-allowed';
+        transition?: string;
+        boxSizing?: 'content-box' | 'border-box';
+        listStyleType?: 'disc' | 'circle' | 'square' | 'none';
+        listStylePosition?: 'inside' | 'outside';
+        visibility?: 'visible' | 'hidden';
+        clip?: string;
+        transformOrigin?: string;
+        willChange?: string;
+        filter?: string;
+        backdropFilter?: string;
+        objectFit?: 'fill' | 'contain' | 'cover' | 'none' | 'scale-down';
+        objectPosition?: string;
+        shapeOutside?: string;
+        textOverflow?: 'clip' | 'ellipsis';
+        alignItems?: 'flex-start' | 'center' | 'flex-end' | 'stretch' | 'baseline';
+        justifyContent?: 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly';
+        alignSelf?: 'auto' | 'flex-start' | 'center' | 'flex-end' | 'stretch';
+        flex?: string;
+        flexDirection?: 'row' | 'row-reverse' | 'column' | 'column-reverse';
+        flexWrap?: 'nowrap' | 'wrap' | 'wrap-reverse';
+        alignContent?: 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around' | 'stretch';
+        gap?: string;
+        gridTemplateColumns?: string;
+        gridTemplateRows?: string;
+        gridColumn?: string;
+        gridRow?: string;
+        gridTemplateAreas?: string;
+        gridAutoColumns?: string;
+        gridAutoRows?: string;
+        gridAutoFlow?: 'row' | 'column' | 'dense' | 'row dense' | 'column dense';
+        gridColumnGap?: string;
+        gridRowGap?: string;
+        gridGap?: string;
+        columnGap?: string;
+        rowGap?: string;
+        boxShadowInset?: string;
     };
 }
+
 
 export type BlockSettingsUpdate = Partial<BlockSettings>;
 
@@ -39,9 +111,19 @@ export interface ColumnsBlockContent extends BlockContent {
 
 export interface Block {
     id: string;
+    className?: string,
     type: BlockType;
+    text?: string;
     content: BlockContent;
-    settings: BlockSettings;
+    settings?: BlockSettings | any;
+    children?: Block[]
+    alt?: string;
+    src?: string;
+    onClick?: any
+    editable?: boolean;
+    //a
+    href?: string;
+    target?: string;
 }
 
 // Theme Types
