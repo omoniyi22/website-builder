@@ -120,6 +120,7 @@ export const EditorPlate: React.FC<EditorPlateProps> = ({
                 </div>
             </div>
         </div>
+        
     );
 };
 
