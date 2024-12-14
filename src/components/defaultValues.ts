@@ -200,12 +200,12 @@ export const defaultValue: Page = {
                 },
                 {
                     type: "div",
-                    className: "flex items-center justify-center bg-black text-white h-48",
+                    className: "flex items-center justify-center bg-black text-white h-72 py-5",
                     content: [
                         {
                             "editable": true,
                             type: "div",
-                            className: "ftext-5xl text-center",
+                            className: "text-5xl text-center line-clamp-2 max-w-[500px]",
                             text: "This is a large header text"
 
                         }

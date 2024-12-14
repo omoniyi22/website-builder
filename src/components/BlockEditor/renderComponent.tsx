@@ -80,7 +80,7 @@ const RenderPage = ({ blocks }: any) => {
         });
     };
 
-    return <div className="w-[100%] bg-gray p-4">
+    return <div className="w-[100%] bg-gray p-4 ">
         {renderBlocks()}
     </div>;
 };
